@@ -1,0 +1,16 @@
+# Dependency directories
+node_modules/
+
+# Python environment
+venv/
+__pycache__/
+*.py[cod]
+
+# Database
+*.db
+
+# Tailwind output
+app/static/css/dist.css
+
+#environment variables
+.env
