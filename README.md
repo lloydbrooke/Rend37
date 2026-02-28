@@ -39,7 +39,7 @@ npm install
 # Start the Tailwind compiler in a separate terminal
 # This watches main.css and generates dist.css
 # Do this in a seperate terminal
-npx @tailwindcss/cli -i ./app/static/css/main.css -o ./app/static/css/dist.css --watch
+npx @tailwindcss/cli -i ./static/css/main.css -o ./static/css/dist.css --watch
 ```
 
 ### 4. Database Initialization
