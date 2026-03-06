@@ -40,7 +40,7 @@ class Event(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False) 
     category: Mapped[str] = mapped_column(String(50), nullable=False, index=True) 
     
-    # Proximity/Location Data [cite: 11, 38]
+    # Proximity/Location Data
     latitude: Mapped[float] = mapped_column(Float, nullable=False) 
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
     location_name: Mapped[str] = mapped_column(String(255), nullable=False)

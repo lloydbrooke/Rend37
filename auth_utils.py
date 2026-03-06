@@ -1,20 +1,16 @@
 from datetime import datetime, timedelta, UTC
-from typing import Optional
-from fastapi import Request, HTTPException, status
+from fastapi import Request
 from jose import JWTError
 from jose import jwt
 from passlib.context import CryptContext
 
-
-# Configuration
-SECRET_KEY = "your_secret_key_here" # Keep this safe!
+SECRET_KEY = "your_secret_key_here"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
-    # Ensure the password isn't massive, though 72 is plenty for users
     if len(password) > 72:
         password = password[:72]
     return pwd_context.hash(password)

@@ -31,3 +31,5 @@ class UserRegisterForm(BaseModel):
 class LoginForm(BaseModel):
     username: str
     password: str
+
+'''follow the above pattern to make more forms like for community creation event creation etc.'''

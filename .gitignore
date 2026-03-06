@@ -18,3 +18,4 @@ app/static/css/dist.css
 pyproject.toml
 .python-version
 uv.lock
+snippets.txt

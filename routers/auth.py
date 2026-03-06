@@ -14,43 +14,46 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 @router.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request, error: str = None):
-    return templates.TemplateResponse("register.html", {"request": request, "error": error})
+async def register_page(request: Request, error: str = None, next: str = None):
+    return templates.TemplateResponse("register.html", {"request": request, "error": error, "next": next})
 
 @router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request, msg: str = None, error: str = None):
+async def login_page(request: Request, msg: str = None, error: str = None, next: str = None):
     return templates.TemplateResponse("login.html", {
-        "request": request, 
+        "request": request,
         "success_msg": msg,
-        "error": error # Now handles the dashboard-kick-back error
+        "error": error,
+        "next": next,
     })
 
-# --- LOGIC (POST REQUESTS) ---
 @router.post("/register")
 async def register_user(
     request: Request,
     form_data: Annotated[UserRegisterForm, Depends(UserRegisterForm.as_form)],
-    db: Annotated[AsyncSession, Depends(get_db)] = None 
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    next: Annotated[str | None, Form()] = None,
 ):
-    # 1. Check if Username exists
+    # check if username already exists
     user_stmt = select(models.User).filter(models.User.username == form_data.username)
     user_result = await db.execute(user_stmt)
     if user_result.scalars().first():
         return templates.TemplateResponse("register.html", {
-            "request": request, 
-            "error": f"The username '{form_data.username}' is already taken."
+            "request": request,
+            "error": f"The username '{form_data.username}' is already taken.",
+            "next": next,
         })
 
-    # 2. Check if Email exists
+    # check if email already exists
     email_stmt = select(models.User).filter(models.User.email == form_data.email)
     email_result = await db.execute(email_stmt)
     if email_result.scalars().first():
         return templates.TemplateResponse("register.html", {
-            "request": request, 
-            "error": f"the email '{form_data.email}' is already associated with an account."
+            "request": request,
+            "error": f"the email '{form_data.email}' is already associated with an account.",
+            "next": next,
         })
 
-    # 3. Create user if both are clear
+    # create user if both are clear
     try:
         new_user = models.User(
             username=form_data.username,
@@ -59,12 +62,16 @@ async def register_user(
         )
         db.add(new_user)
         await db.commit()
-        return RedirectResponse(url="/auth/login?msg=Account+created+successfully", status_code=status.HTTP_302_FOUND)
+        login_url = "/auth/login?msg=Account+created+successfully"
+        if next:
+            login_url += f"&next={next}"
+        return RedirectResponse(url=login_url, status_code=status.HTTP_302_FOUND)
     except Exception as e:
         await db.rollback()
         return templates.TemplateResponse("register.html", {
-            "request": request, 
-            "error": "An unexpected error occurred. Please try again."
+            "request": request,
+            "error": "An unexpected error occurred. Please try again.",
+            "next": next,
         })
 
 @router.post("/login")
@@ -72,23 +79,25 @@ async def login_user(
     response: Response,
     request: Request,
     form_data: Annotated[LoginForm, Depends(LoginForm.as_form)],
-    db: Annotated[AsyncSession, Depends(get_db)] = None
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    next: Annotated[str | None, Form()] = None,
 ):
     # Use Async-style query (select)
     result = await db.execute(select(models.User).filter(models.User.username == form_data.username))
     user = result.scalars().first()
-    
+
     if not user or not auth_utils.verify_password(form_data.password, user.hashed_password):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid credentials"})
-    
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid credentials", "next": next})
+
     token = auth_utils.create_access_token(data={"sub": user.username})
-    
-    redirect = RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
+
+    redirect_url = next if next and next.startswith("/") else "/communities"
+    redirect = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
     redirect.set_cookie(key="access_token", value=f"Bearer {token}", httponly=True, samesite="lax")
     return redirect
 
 @router.get("/logout")
 async def logout():
-    response = RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+    response = RedirectResponse(url="/communities", status_code=status.HTTP_302_FOUND)
     response.delete_cookie("access_token")
     return response
