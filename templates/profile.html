@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl mt-4 font-bold mb-6">User data</h1>
+    <p class="text-5xl my-1.5">{{ user.username }}</p>
+    <p class=" my-1.5">{{ user.email }}</p>
+ 
+    <h2 class="text-3xl mt-4"> Created Communities </h2>
+    {% for community in user.owned_communities %}
+        <p>{{ community.name }}</p>
+    {% endfor %}
+
+    <h2 class="text-3xl mt-4"> Joined Communities </h2>
+    {% for membership in user.community_memberships %}
+        <p>{{ membership.community.name }}</p>
+    {% endfor %}
+
+    <h2 class="text-3xl mt-4"> Events </h2>
+    {% for event in user.created_events %}
+        <p>{{ event.title }}</p>
+    {% endfor %}
+    
+    <h2 class="text-3xl mt-4"> Registrations </h2>
+    {% for registration in user.registrations %}
+        <p>{{ registration.event_id }} - {{ registration.status }} - {{ registration.event.title }}</p>
+    {% endfor %}
+
+</div>
+{% endblock %}
