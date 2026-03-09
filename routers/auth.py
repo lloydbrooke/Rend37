@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, Form, Request, Response, status
+from fastapi import APIRouter, Depends, Form, Request, Response, status,HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
@@ -124,4 +124,36 @@ async def get_user_profile(
     user_data = result.scalars().first()
 
     return templates.TemplateResponse("profile.html", {"request": request, "user": user_data})
+
+@router.get("/profile/{user_id}")
+async def get_user_profile(
+    user_id: int,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    user=Depends(auth_utils.get_current_user)
+):
+    result = await db.execute(
+    select(models.User)
+    .options(
+        selectinload(models.User.community_memberships).selectinload(models.CommunityMember.community),
+    )
+    .filter(models.User.id == user_id)
+    )
+    db_result = result.scalars().first()  
+
+    if not db_result:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # if its the current user redirect them to the proper auth profile route where they can edit their details 
+    if user.username == db_result.username:
+        return RedirectResponse("/auth/profile") 
+
+    # build context dict containing public facing data
+    user_data = {
+        "username": db_result.username,
+        "communities": db_result.community_memberships,
+        "image_url" : db_result.image_url 
+    }
+
+    return templates.TemplateResponse("user_profile.html", {"request": request, "user": user_data})
 

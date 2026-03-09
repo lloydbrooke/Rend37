@@ -11,7 +11,7 @@ __pycache__/
 *.db
 
 # Tailwind output
-./static/css/dist.css
+static/css/dist.css
 
 #environment variables
 .env
