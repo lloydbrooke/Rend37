@@ -49,6 +49,23 @@ We'll use **SQLite** for local development.
 - The database file will be automatically generated as `rend37.db`  upon first run.
 - Ensure you do **not** commit the `.db` file to GitHub.
 
+#### Seeding the Database
+
+To populate the database with sample data for development, run:
+
+```bash
+python seed.py
+```
+
+This will **wipe all existing data**, recreate every table, and insert:
+- 4 users (`alice`, `bob`, `charlie`, `diana` — all with password `password123`)
+- 4 communities
+- 6 events (with real Liverpool coordinates)
+- 8 event registrations
+- 4 threaded discussion messages
+
+Run it whenever you want a clean slate with fresh test data.
+
 ### 5. Running the Application
 
 ```bash
@@ -70,7 +87,24 @@ To allow concurrent development of vertical features, we use a modular layout:
 - **models.py**: Centralized SQLAlchemy models defining our data schema.
 - **templates/**: Jinja2 HTML files. We use **HTMX** for partial page updates to reduce client-side latency.
 - **static/**: CSS, JavaScript (Leaflet for maps), and uploaded media.
-- **tests/**: any unit tests you wanna do.
+- **tests/**: Pytest unit tests for each subsystem.
+
+---
+
+## Running Tests
+
+Tests use an **in-memory SQLite database** so they never touch your real `rend37.db`.
+
+```bash
+# Run all tests
+python -m pytest -v
+
+# Run a specific test file
+python -m pytest tests/test_auth.py -v
+
+# Run tests matching a keyword
+python -m pytest -k "login" -v
+```
 
 ---
 

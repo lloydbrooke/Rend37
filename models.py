@@ -78,7 +78,10 @@ class Message(Base):
     
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
     event_id: Mapped[int] = mapped_column(ForeignKey('events.id'), nullable=False)
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey('messages.id'), nullable=True)
 
     # Relationships
     author: Mapped[User] = relationship(back_populates='messages')
     event: Mapped[Event] = relationship(back_populates='discussion_posts')
+    replies: Mapped[List["Message"]] = relationship("Message", back_populates="parent")
+    parent: Mapped[Optional["Message"]] = relationship("Message", back_populates="replies", remote_side=[id])
