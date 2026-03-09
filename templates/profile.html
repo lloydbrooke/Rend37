@@ -5,6 +5,7 @@
     <h1 class="text-3xl mt-4 font-bold mb-6">User data</h1>
     <p class="text-5xl my-1.5">{{ user.username }}</p>
     <p class=" my-1.5">{{ user.email }}</p>
+    <p class=" my-1.5">{{ user.id }}</p>
  
     <h2 class="text-3xl mt-4"> Created Communities </h2>
     {% for community in user.owned_communities %}
