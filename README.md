@@ -137,11 +137,35 @@ git add .
 git commit -m "Add logic for proximity-based event querying"
 ```
 
-### 4. Push & Pull Request (PR)
+### 4. Rebase from Main
+
+While you're working on your branch, other team members may merge their PRs into `main`. If that happens, your branch will be **behind** `main` and may have conflicts. Rebasing brings your branch up to date by replaying your commits on top of the latest `main`, giving you a clean, linear history.
+
+```bash
+# Make sure you've committed or stashed your current work first
+git fetch origin
+git rebase origin/main
+```
+
+If there are **merge conflicts**, Git will pause and ask you to resolve them:
+
+1. Open the conflicting files and fix the conflicts (look for `<<<<<<<`, `=======`, `>>>>>>>` markers).
+2. Stage the resolved files: `git add <file>`
+3. Continue the rebase: `git rebase --continue`
+4. If things go wrong and you want to start over: `git rebase --abort`
+
+**When should you rebase?**
+
+- Before pushing your branch or opening a PR — this ensures your branch merges cleanly.
+- When you see that `main` has new commits that affect files you're also working on.
+- If your PR shows merge conflicts on GitHub.
+
+### 5. Push & Pull Request (PR)
 
 When your feature is complete and tested:
 
 1. Push your branch: `git push origin feature/your-feature-name`
+   - If you've rebased, you may need to force-push: `git push origin feature/your-feature-name --force-with-lease`
 2. Go to GitHub and open a **Pull Request**.
 3. Tag at least one team member to review your code. **Do not merge your own PR.*
 
