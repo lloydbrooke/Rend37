@@ -15,6 +15,7 @@ from sqlalchemy.orm import selectinload
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import auth_utils
+from auth_utils import require_current_user, get_current_user,LoginRequiredException
 import models
 
 from routers import auth
@@ -84,15 +85,13 @@ async def events_page(request: Request, db: Annotated[AsyncSession, Depends(get_
     })
 
 @app.get("/map", response_class=HTMLResponse)
-async def map_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
-    username = auth_utils.get_current_user_from_cookie(request)
-    user = None
-    if username:
-        result = await db.execute(select(models.User).filter(models.User.username == username))
-        user = result.scalars().first()
-
+async def map_page(request: Request, user=Depends(get_current_user)):
     return templates.TemplateResponse("map.html", {"request": request, "user": user})
 
+
+@app.exception_handler(LoginRequiredException)
+async def login_required_handler(request: Request, exc: LoginRequiredException):
+    return RedirectResponse(url=exc.redirect_url)
 
 ''' error handling and feedback for user '''
 @app.exception_handler(StarletteHTTPException)

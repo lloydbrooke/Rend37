@@ -1,8 +1,21 @@
+from urllib.parse import quote
 from datetime import datetime, timedelta, UTC
-from fastapi import Request
+from fastapi import Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from jose import JWTError
 from jose import jwt
 from passlib.context import CryptContext
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database import get_db
+
+
+class LoginRequiredException(HTTPException):
+    """Raised when a user must log in. Carries the redirect URL."""
+    def __init__(self, redirect_url: str):
+        super().__init__(status_code=401, detail="Not logged in")
+        self.redirect_url = redirect_url
 
 SECRET_KEY = "your_secret_key_here"
 ALGORITHM = "HS256"
@@ -38,3 +51,26 @@ def get_current_user_from_cookie(request: Request):
         return payload.get("sub") # Returns the username
     except JWTError:
         return None
+
+
+async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)):
+    """FastAPI dependency: returns the full User model object or None."""
+    import models
+    username = get_current_user_from_cookie(request)
+    if not username:
+        return None
+    result = await db.execute(select(models.User).filter(models.User.username == username))
+    return result.scalars().first()
+
+
+async def require_current_user(request: Request, user=Depends(get_current_user)):
+    """FastAPI dependency: redirects to login if not authenticated.
+    After login the user is sent back to the page they originally requested."""
+    if not user:
+        next_url = str(request.url.path)
+        if request.url.query:
+            next_url += f"?{request.url.query}"
+        raise LoginRequiredException(
+            redirect_url=f"/auth/login?error=Please+login+first&next={quote(next_url, safe='')}"
+        )
+    return user
