@@ -40,18 +40,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 '''example of how to register a route'''
 app.include_router(auth.router, prefix='/auth', tags=['auth'])
 
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
-    username = auth_utils.get_current_user_from_cookie(request)
-    user = None
-    
-    if username:
-        result = await db.execute(select(models.User).filter(models.User.username == username))
-        user = result.scalars().first()
-    
-    return templates.TemplateResponse("communities.html", {"request": request, "user": user})
-
-
+@app.get("/")
 @app.get("/communities", response_class=HTMLResponse)
 async def communities_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
     username = auth_utils.get_current_user_from_cookie(request)
