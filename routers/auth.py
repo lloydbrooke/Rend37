@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 import auth_utils
 import models
@@ -101,3 +102,26 @@ async def logout():
     response = RedirectResponse(url="/communities", status_code=status.HTTP_302_FOUND)
     response.delete_cookie("access_token")
     return response
+
+
+''' user profile routes '''
+@router.get("/profile")
+async def get_user_profile(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    user=Depends(auth_utils.require_current_user)
+):
+    result = await db.execute(
+    select(models.User)
+    .options(
+        selectinload(models.User.owned_communities),
+        selectinload(models.User.created_events),
+        selectinload(models.User.community_memberships).selectinload(models.CommunityMember.community),
+        selectinload(models.User.registrations).selectinload(models.Registration.event)
+    )
+    .filter(models.User.username == user.username)
+    )   
+    user_data = result.scalars().first()
+
+    return templates.TemplateResponse("profile.html", {"request": request, "user": user_data})
+

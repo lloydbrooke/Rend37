@@ -38,6 +38,7 @@ async def public_page(request: Request, user=Depends(get_current_user)):
 #when you extract the user from the db the things in the relationships dont come automatically
 #selectinload makes sure you have those
 #in the html you can then use dot notation to access shit like user.username, user.registrations or whatever
+from sqlalchemy.orm import selectinload
 
 result = await db.execute(
     select(models.User)
