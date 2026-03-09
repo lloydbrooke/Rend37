@@ -1,14 +1,35 @@
 # Some useful snippets to help you
 
-## Protecting routes behing authorization
+## Protecting routes behind authorization
+
+Import at the top of your router file:
+```python
+from auth_utils import get_current_user, require_current_user
+```
+
+### Protected route (login required)
+If the user is not logged in they get redirected to `/auth/login`, then sent back after login.
+`user` is a full User model object — no manual DB lookup needed.
 
 ```python
-#add this at the top of any route that you want to protect behind authorization
-#replace the last bit with whatever route you want to return to after logging in 
+@router.get("/protected", response_class=HTMLResponse)
+async def protected_page(request: Request, user=Depends(require_current_user)):
+    return templates.TemplateResponse("page.html", {
+        "request": request,
+        "user": user,
+    })
+```
 
-username = auth_utils.get_current_user_from_cookie(request)
-if not username:
-    return RedirectResponse(url="/auth/login?error=Please+login+first&next=/<route to go to after logging in>")
+### Optional auth route (public, but may need user data if they are logged in)
+Page is visible to everyone. `user` is the User object if logged in, else `None`.
+
+```python
+@router.get("/public", response_class=HTMLResponse)
+async def public_page(request: Request, user=Depends(get_current_user)):
+    return templates.TemplateResponse("page.html", {
+        "request": request,
+        "user": user,   # None if not logged in
+    })
 ```
 
 ## When you want a user with all their communities and registrations
