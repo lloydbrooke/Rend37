@@ -106,7 +106,7 @@ async def logout():
 
 ''' user profile routes '''
 @router.get("/profile")
-async def get_user_profile(
+async def get_profile(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
     user=Depends(auth_utils.require_current_user)
