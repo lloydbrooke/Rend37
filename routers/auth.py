@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 import auth_utils
 import models
 from database import get_db
-from schemas import LoginForm, UserRegisterForm
+from schemas import LoginForm, UserRegisterForm, UpdateProfileForm
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -103,6 +103,62 @@ async def logout():
     response.delete_cookie("access_token")
     return response
 
+
+''' user profile routes '''
+@router.post("/profile")
+async def update_profile(
+    request: Request,
+    form_data: Annotated[UpdateProfileForm, Depends(UpdateProfileForm.as_form)],
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    user=Depends(auth_utils.require_current_user)
+):
+    result = await db.execute(
+    select(models.User)
+    .options(
+        selectinload(models.User.owned_communities),
+        selectinload(models.User.created_events),
+        selectinload(models.User.community_memberships).selectinload(models.CommunityMember.community),
+        selectinload(models.User.registrations).selectinload(models.Registration.event)
+    )
+    .filter(models.User.username == user.username)
+    )   
+    user_data = result.scalars().first()
+
+    # check for fields with data and update the user based on those 
+    # check if username already exists
+    if form_data.username:
+        user_stmt = select(models.User).filter(models.User.username == form_data.username)
+        user_result = await db.execute(user_stmt)
+        if user_result.scalars().first():
+            return templates.TemplateResponse("profile.html", {
+                "request": request,
+                "error": f"The username '{form_data.username}' is already taken.",
+                "user" : user_data
+            })
+        
+        user_data.username=form_data.username
+
+    # check if email already exists
+    if form_data.email:
+        email_stmt = select(models.User).filter(models.User.email == form_data.email)
+        email_result = await db.execute(email_stmt)
+        if email_result.scalars().first():
+            return templates.TemplateResponse("profile.html", {
+                "request": request,
+                "error": f"the email '{form_data.email}' is already associated with an account.",
+                "user" : user_data
+            })
+        
+        user_data.email=form_data.email
+# update the information
+
+    await db.commit()
+# return the profile page with new updated information
+    response = templates.TemplateResponse("profile.html", {"request": request, "user": user_data})
+    # reissue the JWT cookie so it reflects the (possibly changed) username
+    token = auth_utils.create_access_token(data={"sub": user_data.username})
+    response.set_cookie(key="access_token", value=f"Bearer {token}", httponly=True, samesite="lax")
+    return response
 
 ''' user profile routes '''
 @router.get("/profile")
