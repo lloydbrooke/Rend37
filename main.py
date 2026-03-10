@@ -40,7 +40,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 '''example of how to register a route'''
 app.include_router(auth.router, prefix='/auth', tags=['auth'])
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 @app.get("/communities", response_class=HTMLResponse)
 async def communities_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
     username = auth_utils.get_current_user_from_cookie(request)
@@ -80,7 +80,7 @@ async def map_page(request: Request, user=Depends(get_current_user)):
 
 @app.exception_handler(LoginRequiredException)
 async def login_required_handler(request: Request, exc: LoginRequiredException):
-    return RedirectResponse(url=exc.redirect_url)
+    return RedirectResponse(url=exc.redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
 ''' error handling and feedback for user '''
 @app.exception_handler(StarletteHTTPException)

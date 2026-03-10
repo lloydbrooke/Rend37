@@ -8,7 +8,7 @@ def as_form(cls: Type[BaseModel]):
         inspect.Parameter(
             field_name,
             inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            default=Form(...),
+            default=Form(... if field.is_required() else field.default),
             annotation=field.annotation,
         )
         for field_name, field in cls.model_fields.items()
@@ -31,5 +31,11 @@ class UserRegisterForm(BaseModel):
 class LoginForm(BaseModel):
     username: str
     password: str
+
+# add a field for profile picture later 
+@as_form
+class UpdateProfileForm(BaseModel):
+    username: str | None = None
+    email: EmailStr | None = None
 
 '''follow the above pattern to make more forms like for community creation event creation etc.'''

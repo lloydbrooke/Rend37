@@ -17,10 +17,11 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # Relationships
-    owned_communities: Mapped[List[Community]] = relationship(back_populates='creator', cascade="all, delete-orphan") 
-    created_events: Mapped[List[Event]] = relationship(back_populates='organizer', cascade="all, delete-orphan") 
-    registrations: Mapped[List[Registration]] = relationship(back_populates='user') 
-    messages: Mapped[List[Message]] = relationship(back_populates='author') 
+    owned_communities: Mapped[List[Community]] = relationship(back_populates='creator', cascade="all, delete-orphan")
+    created_events: Mapped[List[Event]] = relationship(back_populates='organizer', cascade="all, delete-orphan")
+    community_memberships: Mapped[List[CommunityMember]] = relationship(back_populates='user', cascade="all, delete-orphan")
+    registrations: Mapped[List[Registration]] = relationship(back_populates='user')
+    messages: Mapped[List[Message]] = relationship(back_populates='author')
 
 class Community(Base):
     __tablename__ = 'communities'
@@ -32,6 +33,7 @@ class Community(Base):
     # Relationships
     creator: Mapped[User] = relationship(back_populates='owned_communities')
     events: Mapped[List[Event]] = relationship(back_populates='community', cascade="all, delete-orphan")
+    members: Mapped[List[CommunityMember]] = relationship(back_populates='community', cascade="all, delete-orphan")
 
 class Event(Base):
     __tablename__ = 'events'
@@ -57,8 +59,19 @@ class Event(Base):
     attendees: Mapped[List[Registration]] = relationship(back_populates='event', cascade="all, delete-orphan") 
     discussion_posts: Mapped[List[Message]] = relationship(back_populates='event', cascade="all, delete-orphan") 
 
+class CommunityMember(Base):
+    """Association table linking Users to Communities they have joined"""
+    __tablename__ = 'community_members'
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
+    community_id: Mapped[int] = mapped_column(ForeignKey('communities.id'), primary_key=True)
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+    # Relationships
+    user: Mapped[User] = relationship(back_populates='community_memberships')
+    community: Mapped[Community] = relationship(back_populates='members')
+
 class Registration(Base):
-    """Association table linking Users to Events with status tracking""" 
+    """Association table linking Users to Events with status tracking"""
     __tablename__ = 'registrations'
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
     event_id: Mapped[int] = mapped_column(ForeignKey('events.id'), primary_key=True)

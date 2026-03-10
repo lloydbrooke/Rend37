@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl mt-4 font-bold mb-6">User data</h1>
+    <p class="text-5xl my-1.5">{{ user.username }}</p>
+
+    <h2 class="text-3xl mt-4"> Joined Communities </h2>
+    {% for membership in user.communities %}
+        <p>{{ membership.community.name }}</p>
+    {% endfor %}
+
+</div>
+{% endblock %}
