@@ -18,7 +18,7 @@ import auth_utils
 from auth_utils import require_current_user, get_current_user,LoginRequiredException
 import models
 
-from routers import auth
+from routers import auth, communities
 
 from database import Base, engine, get_db
 
