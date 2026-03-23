@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 
 
+
 router = APIRouter(prefix = "/events", tags = ["Events"])
 @router.post("/")
 async def create_event(event: Event, db: Session = Depends(get_db)):
@@ -66,21 +67,21 @@ async def delete_event(event_id : int, db: Session = Depends(get_db)):
         raise HTTPException(status_code= 404, detail= "Event Not found!")
     db.delete(event)
     db.commit() 
-    return {"message" : "Event successfully deleted}
+    return {"message" : "Event successfully deleted"}
 
 
-@router.post("/{event_id}")
-async def edit_event(event_id: int, updated_event : Event, db : session = Depends(det_db)):
+@router.put("/{event_id}")
+async def edit_event(event_id: int, updated_event : Event, db : Session = Depends(det_db)):
     event = db.query(Event).filter(Event.id == event_id).first()
     if not event:
         raise HTTPException(status_code= 404, detail= "Event Not found!")
     
-    event_title = updated_event.title,
-    event_description = updated_event.description,
-    event_category = updated_event.category,
-    event_capacity = updated_event.capacity_limit,
-    event_latitude = updated_event.latitude,
-    event_longitude = updated_event.longitude
+    event.title = updated_event.title,
+    event.description = updated_event.description,
+    event.category = updated_event.category,
+    event.capacity = updated_event.capacity_limit,
+    event.latitude = updated_event.latitude,
+    event.longitude = updated_event.longitude
         
     db.commit()
     db.refresh(event)
