@@ -11,7 +11,7 @@ router = APIRouter(prefix = "/events", tags = ["Events"])
 @router.post("/")
 async def create_event(event: Event, db: Session = Depends(get_db)):
     new_event = Event(
-        event_id = event.id,
+        event_id = event.id,            # Might not need this ID attribute since I think the DB generates a unique ID itself 
         event_title = event.title,
         event_description = event.description,
         event_category = event.category,
