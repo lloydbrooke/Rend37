@@ -37,10 +37,10 @@ async def get_event(event_id: int, db: Session = Depends(get_db)):
     if (not event):
         raise HTTPException(status_code= 404, detail= "Event Not found!")
     return event
-@router.post("/{event_id}/{register}")
+@router.post("/{event_id}/{register}")            # path should be "/{event_id}/register"
 async def register_for_event(event_id: int, user_id: int, db: Session = Depends(get_db)):
     # checks to see whether the event exists
-    event = db.query(Event).filter_by(Event.id == event_id, id).first()
+    event = db.query(Event).filter_by(Event.id == event_id, id).first()        # should be event = db.query(Event).filter(Event.id == event_id).first() 
     if (not event):
         raise HTTPException(status_code= 404, detail= "Event Not found!")
     #checks to see if the user is already registered, prevent duplicate registers
@@ -57,6 +57,17 @@ async def register_for_event(event_id: int, user_id: int, db: Session = Depends(
     db.add(registration)
     db.commit()
     return{"message": "Registration Successful"}
+
+
+@router.delete("/{event_id}")
+async def delete_event(event_id : int, db: Session = Depends(get_db)):
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code= 404, detail= "Event Not found!")
+    db.delete(event)
+    db.commit() 
+    return {"message" : "Event successfully deleted}
+
 
 '''
 further functionality such a
