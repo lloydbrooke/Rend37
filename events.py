@@ -12,7 +12,7 @@ router = APIRouter(prefix = "/events", tags = ["Events"])
 @router.post("/")
 async def create_event(event: Event, db: Session = Depends(get_db)):
     new_event = Event(
-        event_id = event.id,            # Might not need this ID attribute since I think the DB generates a unique ID itself 
+        #event_id = event.id,            # Might not need this ID attribute since I think the DB generates a unique ID itself 
         event_title = event.title,
         event_description = event.description,
         event_category = event.category,
@@ -38,10 +38,10 @@ async def get_event(event_id: int, db: Session = Depends(get_db)):
     if (not event):
         raise HTTPException(status_code= 404, detail= "Event Not found!")
     return event
-@router.post("/{event_id}/{register}")            # path should be "/{event_id}/register"
+@router.post("/{event_id}/register")            
 async def register_for_event(event_id: int, user_id: int, db: Session = Depends(get_db)):
     # checks to see whether the event exists
-    event = db.query(Event).filter_by(Event.id == event_id, id).first()        # should be event = db.query(Event).filter(Event.id == event_id).first() 
+    event = db.query(Event).filter(Event.id == event_id, id).first()         
     if (not event):
         raise HTTPException(status_code= 404, detail= "Event Not found!")
     #checks to see if the user is already registered, prevent duplicate registers
