@@ -89,8 +89,3 @@ async def edit_event(event_id: int, updated_event : Event, db : Session = Depend
         
         
     
-
-
-'''
-further functionality such a
-'''
