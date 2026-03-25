@@ -1,0 +1,70 @@
+{# Define the macro that can call itself #}
+{% macro render_message(msg, event_id, user, depth=0) %}
+<div id="message-{{ msg.id }}" class="group mt-4 {% if depth > 0 %}ml-8 border-l-2 border-base-300 pl-4{% endif %}">
+    <div class="flex gap-3 items-start">
+        {# User Avatar Placeholder #}
+        <div class="avatar placeholder">
+            <div class="bg-neutral text-neutral-content rounded-full w-8">
+                <span class="text-xs">{{ msg.author.username[0]|upper }}</span>
+            </div>
+        </div>
+
+        <div class="flex-grow">
+            {# Message Header #}
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-sm">{{ msg.author.username }}</span>
+                <span class="text-xs opacity-50">{{ msg.timestamp.strftime('%H:%M') }}</span>
+            </div>
+
+            {# Message Content #}
+            <div class="text-sm mt-1">
+                {{ msg.content }}
+            </div>
+
+            {# Interaction Row: Reply & Delete #}
+            <div class="flex gap-4 mt-2 items-center">
+                {# Reply Toggle (DaisyUI Details/Summary for zero JS) #}
+                <details class="dropdown">
+                    <summary class="text-xs text-primary cursor-pointer hover:underline list-none font-semibold">Reply</summary>
+                    <div class="dropdown-content z-[1] p-4 shadow-2xl bg-base-100 rounded-box w-72 border border-base-300 mt-2">
+                        <form hx-post="/events/{{ event_id }}/discussions" 
+                              hx-target="#replies-{{ msg.id }}" 
+                              hx-swap="beforeend"
+                              hx-on::after-request="this.closest('details').removeAttribute('open'); this.reset();">
+                            <input type="hidden" name="parent_id" value="{{ msg.id }}">
+                            <textarea name="content" class="textarea textarea-bordered textarea-sm w-full mb-2" 
+                                      placeholder="Write your reply..." required></textarea>
+                            <button type="submit" class="btn btn-primary btn-xs w-full">Post Reply</button>
+                        </form>
+                    </div>
+                </details>
+
+                {# Delete Check: Only Author or Organizer #}
+                {% if user and (user.id == msg.user_id) %}
+                <button hx-delete="/events/{{ event_id }}/discussions/{{ msg.id }}"
+                        hx-target="#message-{{ msg.id }}"
+                        hx-swap="outerHTML"
+                        hx-confirm="Are you sure you want to delete this message?"
+                        class="text-xs text-error font-semibold hover:underline opacity-0 group-hover:opacity-100 transition-opacity">
+                    Delete
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Recursive Step: Render all children of this message #}
+    <div id="replies-{{ msg.id }}" class="mt-2">
+        {% if msg.temp_replies %}
+            {% for reply in msg.temp_replies %}
+                {{ render_message(reply, event_id, user, depth + 1) }}
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{# This block is used when the POST route returns a single new message node #}
+{% if message %}
+    {{ render_message(message, event_id, user) }}
+{% endif %}
