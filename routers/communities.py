@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Request, HTTPException, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 import models
@@ -14,7 +13,7 @@ from database import get_db
 router = APIRouter()
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("", response_class=HTMLResponse)
 async def list_communities(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
     user = await auth_utils.get_current_user(request, db)
     result = await db.execute(select(models.Community))
@@ -47,19 +46,20 @@ async def create_community(
     name: str = Form(...),
     description: str = Form(...),
 ):
-    community = models.Community(name=name, description=description, creator_id=current_user.id)
-    db.add(community)
-    try:
-        await db.commit()
-        await db.refresh(community)
-    except IntegrityError:
-        await db.rollback()
+    # check if a community with that name already exists
+    existing = await db.execute(select(models.Community).where(models.Community.name == name))
+    if existing.scalars().first():
         templates = request.app.state.templates
         return templates.TemplateResponse("community_create.html", {
             "request": request,
             "user": current_user,
             "error": "A community with that name already exists.",
         }, status_code=409)
+
+    community = models.Community(name=name, description=description, creator_id=current_user.id)
+    db.add(community)
+    await db.commit()
+    await db.refresh(community)
     return RedirectResponse(url=f"/communities/{community.id}", status_code=303)
 
 

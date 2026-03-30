@@ -14,7 +14,7 @@ from database import get_db
 router = APIRouter()
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("", response_class=HTMLResponse)
 async def list_events(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
     user = await auth_utils.get_current_user(request, db)
     result = await db.execute(select(models.Event))

@@ -12,7 +12,7 @@ from database import get_db
 router = APIRouter()
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("", response_class=HTMLResponse)
 async def map_page(request: Request, user=Depends(auth_utils.get_current_user)):
     templates = request.app.state.templates
     return templates.TemplateResponse("map.html", {"request": request, "user": user})
