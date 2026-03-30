@@ -88,7 +88,7 @@ async def edit_event(
     event.description = updated_event.description
     event.category = updated_event.category
     event.capacity = updated_event.capacity_limit
-    event.latitude = updated_event.latitude,
+    event.latitude = updated_event.latitude
     event.longitude = updated_event.longitude
         
     db.commit()
