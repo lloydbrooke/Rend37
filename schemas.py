@@ -38,4 +38,15 @@ class UpdateProfileForm(BaseModel):
     username: str | None = None
     email: EmailStr | None = None
 
+
+@as_form
+class EventCreateForm(BaseModel):
+    title: str
+    description: str
+    category: str
+    capacity_limit: int
+    latitude: float
+    longitude: float
+
+
 '''follow the above pattern to make more forms like for community creation event creation etc.'''
