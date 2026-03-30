@@ -1,26 +1,17 @@
-from typing import Annotated
-
 from contextlib import asynccontextmanager
-from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
 
-from fastapi import FastAPI, Request, HTTPException, Response, status, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Request, status
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-import auth_utils
-from auth_utils import require_current_user, get_current_user,LoginRequiredException
-import models
+from auth_utils import LoginRequiredException
 
-from routers import auth , discussions
+from routers import auth, communities, events, discussions, map as map_router
 
-from database import Base, engine, get_db
+from database import Base, engine
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -38,70 +29,18 @@ templates = Jinja2Templates(directory="templates")
 app.state.templates = templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-'''example of how to register a route'''
+# register all the routers
 app.include_router(auth.router, prefix='/auth', tags=['auth'])
+app.include_router(communities.router, prefix='/communities', tags=['communities'])
+app.include_router(events.router, prefix='/events', tags=['events'])
 app.include_router(discussions.router, prefix='/events', tags=['discussions'])
+app.include_router(map_router.router, prefix='/map', tags=['map'])
 
-@app.get("/", response_class=HTMLResponse)
-@app.get("/communities", response_class=HTMLResponse)
-async def communities_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
-    username = auth_utils.get_current_user_from_cookie(request)
-    user = None
-    if username:
-        result = await db.execute(select(models.User).filter(models.User.username == username))
-        user = result.scalars().first()
 
-    result = await db.execute(select(models.Community))
-    communities = result.scalars().all()
-    return templates.TemplateResponse("communities.html", {
-        "request": request,
-        "user": user,
-        "communities": communities,
-    })
-
-@app.get("/events/{event_id}", response_class=HTMLResponse)
-async def event_detail_page(
-    event_id: int, 
-    request: Request, 
-    db: Annotated[AsyncSession, Depends(get_db)]
-):
-    user = await auth_utils.get_current_user(request, db)
-    # Fetch event and its organizer details
-    result = await db.execute(
-        select(models.Event)
-        .options(selectinload(models.Event.organizer))
-        .where(models.Event.id == event_id)
-    )
-    event = result.scalars().first()
-    
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
-        
-    return templates.TemplateResponse("event_detail.html", {
-        "request": request,
-        "user": user,
-        "event": event
-    })
-
-@app.get("/events", response_class=HTMLResponse)
-async def events_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
-    username = auth_utils.get_current_user_from_cookie(request)
-    user = None
-    if username:
-        result = await db.execute(select(models.User).filter(models.User.username == username))
-        user = result.scalars().first()
-
-    result = await db.execute(select(models.Event))
-    events = result.scalars().all()
-    return templates.TemplateResponse("events.html", {
-        "request": request,
-        "user": user,
-        "events": events,
-    })
-
-@app.get("/map", response_class=HTMLResponse)
-async def map_page(request: Request, user=Depends(get_current_user)):
-    return templates.TemplateResponse("map.html", {"request": request, "user": user})
+# homepage just redirects to communities for now
+@app.get("/")
+async def homepage():
+    return RedirectResponse(url="/communities", status_code=302)
 
 
 @app.exception_handler(LoginRequiredException)
@@ -127,4 +66,3 @@ async def general_http_exception_handler(request: Request, exception: StarletteH
         },
         status_code=exception.status_code,
     )
-
