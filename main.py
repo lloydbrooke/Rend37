@@ -19,6 +19,7 @@ from auth_utils import require_current_user, get_current_user,LoginRequiredExcep
 import models
 
 from routers import auth
+from routers import events 
 
 from database import Base, engine, get_db
 
@@ -39,6 +40,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 '''example of how to register a route'''
 app.include_router(auth.router, prefix='/auth', tags=['auth'])
+app.include_router(events.router, prefix='/events', tags=['Events'])
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/communities", response_class=HTMLResponse)
