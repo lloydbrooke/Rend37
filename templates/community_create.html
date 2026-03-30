@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Create a Community</h1>
+
+    {% if error %}
+    <div class="alert alert-error mb-4">
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form method="post" action="/communities/create" class="space-y-4">
+        <div class="form-control">
+            <label class="label"><span class="label-text">Name</span></label>
+            <input type="text" name="name" class="input input-bordered w-full" required />
+        </div>
+        <div class="form-control">
+            <label class="label"><span class="label-text">Description</span></label>
+            <textarea name="description" class="textarea textarea-bordered w-full" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+</div>
+{% endblock %}

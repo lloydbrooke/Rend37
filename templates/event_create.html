@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Create an Event</h1>
+
+    <form method="post" action="/events/create" class="space-y-4">
+        <div class="form-control">
+            <label class="label"><span class="label-text">Title</span></label>
+            <input type="text" name="title" class="input input-bordered w-full" required />
+        </div>
+        <div class="form-control">
+            <label class="label"><span class="label-text">Description</span></label>
+            <textarea name="description" class="textarea textarea-bordered w-full" required></textarea>
+        </div>
+        <div class="form-control">
+            <label class="label"><span class="label-text">Category</span></label>
+            <input type="text" name="category" class="input input-bordered w-full" required />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="form-control">
+                <label class="label"><span class="label-text">Latitude</span></label>
+                <input type="number" step="any" name="latitude" class="input input-bordered w-full" required />
+            </div>
+            <div class="form-control">
+                <label class="label"><span class="label-text">Longitude</span></label>
+                <input type="number" step="any" name="longitude" class="input input-bordered w-full" required />
+            </div>
+        </div>
+        <div class="form-control">
+            <label class="label"><span class="label-text">Location Name</span></label>
+            <input type="text" name="location_name" class="input input-bordered w-full" required />
+        </div>
+        <div class="form-control">
+            <label class="label"><span class="label-text">Date & Time</span></label>
+            <input type="datetime-local" name="date_time" class="input input-bordered w-full" required />
+        </div>
+        <div class="form-control">
+            <label class="label"><span class="label-text">Capacity Limit (optional)</span></label>
+            <input type="number" name="capacity_limit" class="input input-bordered w-full" />
+        </div>
+        <div class="form-control">
+            <label class="label"><span class="label-text">Community</span></label>
+            <select name="community_id" class="select select-bordered w-full" required>
+                {% for c in communities %}
+                <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Event</button>
+    </form>
+</div>
+{% endblock %}
