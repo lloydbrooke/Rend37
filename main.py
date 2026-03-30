@@ -106,7 +106,7 @@ async def map_page(request: Request, user=Depends(get_current_user)):
 
 @app.exception_handler(LoginRequiredException)
 async def login_required_handler(request: Request, exc: LoginRequiredException):
-    return RedirectResponse(url=exc.redirect_url, status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=exc.redirect_url, status_code=status.HTTP_302_FOUND)
 
 ''' error handling and feedback for user '''
 @app.exception_handler(StarletteHTTPException)

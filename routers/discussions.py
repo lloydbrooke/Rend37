@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Form
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -110,10 +111,7 @@ async def delete_message(
     if not (message.user_id == current_user.id or message.event.organizer_id == current_user.id):
         raise HTTPException(status_code=403, detail="Permission denied.")
 
-    message.content = "[This message has been deleted]"
+    # actually delete the message from the db
+    await db.delete(message)
     await db.commit()
-    
-    templates = request.app.state.templates
-    return templates.TemplateResponse("partials/message.html", {
-        "request": request, "message": message, "event_id": event_id, "user": current_user
-    })
+    return RedirectResponse(url=f"/events/{event_id}/discussions", status_code=302)
