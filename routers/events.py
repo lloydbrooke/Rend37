@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from models import Event, Registration, User
 from sqlalchemy.orm import Session
 from database import get_db
@@ -9,13 +11,20 @@ from datetime import datetime
 from haversine import haversine
 
 
+
 router = APIRouter(prefix = "/events", tags = ["Events"])
+templates = Jinja2Templates(directory="templates")
 
 # not complete, templates need to be connected
 # Creating events/forms
 @router.get("/create")
-async def create_event_form():
-    return {"message": "Render create event form here"}
+async def create_event_form(
+    request: Request,
+    user: User = Depends(require_current_user)
+):
+    return templates.TemplateResponse("create_event.html", {
+        "request": request
+    })
 
 @router.post("/create")
 async def create_event(
@@ -52,8 +61,8 @@ async def create_event(
     db.add(new_event)
     db.commit()
     db.refresh(new_event)
+    return RedirectResponse(url="/events", status_code=303)
 
-    return new_event
 
 # Returning events
 @router.get("/")
@@ -156,9 +165,26 @@ async def edit_event(
 
     return event
 
+
 @router.get("/{event_id}/edit")
-async def edit_event_form():
-    return {"message" : "Edit event here"}
+async def edit_event_form(
+    event_id: int,
+    request: Request,
+    user: User = Depends(require_current_user),
+    db: Session = Depends(get_db)
+):
+    event = db.query(Event).filter(Event.id == event_id).first()
+
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    if event.organizer_id != user.id:
+        raise HTTPException(status_code=403, detail="Not authorised")
+
+    return templates.TemplateResponse("edit_event.html", {
+        "request": request,
+        "event": event
+    })
 
 
 # Deleting events 
@@ -244,5 +270,4 @@ async def get_nearby_events(
 
 # Create event form
 
-# Cascade a delete event with delete registrations and messages 
 # when registering for an event partially update button to "Unregister"
