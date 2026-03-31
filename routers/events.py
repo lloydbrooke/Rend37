@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from models import Event, Registration, User
 from sqlalchemy.orm import Session
 from database import get_db
@@ -6,6 +6,7 @@ from typing import Annotated
 from schemas import EventCreateForm
 from auth_utils import get_current_user, require_current_user
 from datetime import datetime
+from haversine import haversine
 
 
 router = APIRouter(prefix = "/events", tags = ["Events"])
@@ -24,6 +25,8 @@ async def create_event(
 ):
     
     #Validation
+    if event.capacity_limit is None:
+        raise HTTPException(status_code=400, detail="Must have a capacity limit") 
     if event.capacity_limit <= 0:
         raise HTTPException(status_code=400, detail="Invalid capacity limit") 
     if event.date_time <= datetime.now():               #not sure if this is how we should validate date_time
@@ -53,13 +56,16 @@ async def create_event(
     return new_event
 
 # Returning events
-@router.get("/", response_model=None)
+@router.get("/")
 async def get_all_events(db: Session = Depends(get_db)):
     events = db.query(Event).all()
     return events
 
 @router.get("/{event_id}")
-async def get_event(event_id: int, db: Session = Depends(get_db)):
+async def get_event(
+    event_id: int,
+    db: Session = Depends(get_db)
+):
     event = db.query(Event).filter(Event.id == event_id).first()
     if (not event):
         raise HTTPException(status_code= 404, detail= "Event Not found!")
@@ -115,31 +121,9 @@ async def unregister_event(
     return {"message": "Unregistered successfully"}
 
 
-
-# Deleting events 
-@router.delete("/{event_id}")
-async def delete_event(
-    event_id : int, 
-    user: User = Depends(require_current_user),
-    db: Session = Depends(get_db)
-):
-    event = db.query(Event).filter(Event.id == event_id).first()
-
-    if not event:
-        raise HTTPException(status_code= 404, detail= "Event Not found!")
-
-    if event.organizer_id != user.id:
-        raise HTTPException(status_code=403, detail="Not authorised")
-
-    
-    db.delete(event)
-    db.commit() 
-    return {"message" : "Event successfully deleted"}
-
-
 # might want to make a new update schema for partial updates
 # Editing events
-@router.put("/{event_id}")
+@router.post("/{event_id}/edit")
 async def edit_event(
     event_id: int,
     updated_event: Annotated[EventCreateForm, Depends(EventCreateForm.as_form)],
@@ -172,15 +156,93 @@ async def edit_event(
 
     return event
 
+@router.get("/{event_id}/edit")
+async def edit_event_form():
+    return {"message" : "Edit event here"}
+
+
+# Deleting events 
+@router.delete("/{event_id}")
+async def delete_event(
+    event_id : int, 
+    user: User = Depends(require_current_user),
+    db: Session = Depends(get_db)
+):
+    event = db.query(Event).filter(Event.id == event_id).first()
+
+    if not event:
+        raise HTTPException(status_code= 404, detail= "Event Not found!")
+
+    if event.organizer_id != user.id:
+        raise HTTPException(status_code=403, detail="Not authorised")
+
+    
+    db.delete(event)
+    db.commit() 
+    return {"message" : "Event successfully deleted"}
+
+
+# List of attendees 
+@router.get("/{event_id}/attendees")
+async def get_attendees(
+    event_id: int,
+    db: Session = Depends(get_db)
+):
+    # Check event exists
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Get attendees via join
+    attendees = db.query(User).join(Registration).filter(
+        Registration.event_id == event_id
+    ).all()
+
+
+    return [{"id": user.id, "username": user.username} for user in attendees]
+
+
+
+# Proximity search for events 
+@router.get("/nearby")
+async def get_nearby_events(
+    # Gets data from the URL and automatically verifies
+    lat: float = Query(..., ge=-90, le=90),
+    long: float = Query(..., ge=-180, le=180),
+    #not sure what the default value for radius should be 
+    radius_km: float = Query(10, gt=0),
+    db: Session = Depends(get_db)
+):
+    events = db.query(Event).all()
+
+    nearby_events = []
+
+    for event in events:
+        distance = haversine(
+            (lat, long),
+            (event.latitude, event.longitude)
+        )
+
+        if distance <= radius_km:
+            nearby_events.append({
+                "id": event.id,
+                "title": event.title,
+                "distance_km": round(distance, 2)
+            })
+
+    # sorts by distance
+    nearby_events.sort(key=lambda x: x["distance_km"])
+
+    return nearby_events
 
 
 # Still needed funcionality:
-# Unregister from event 
-# Output antendees list 
-# Implement the authoraisation checking 
-# Output nerby events 
-# In github main/test/test_events.py the paths used are different from ours 
-# Create event form
+
 # Front end
+# Any HTML or HTMX
+# Some functions need to return text rather than raw objects 
+
+# Create event form
+
 # Cascade a delete event with delete registrations and messages 
-# when registerign for an event partially update button to "Unregister"
+# when registering for an event partially update button to "Unregister"
