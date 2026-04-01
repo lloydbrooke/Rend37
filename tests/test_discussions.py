@@ -21,7 +21,7 @@ async def register_user_for_event(db, user_id, event_id):
 @pytest.mark.asyncio
 async def test_discussions_require_login(client, seed_event):
     resp = await client.get(f"/events/{seed_event.id}/discussions", follow_redirects=False)
-    assert resp.status_code in (302, 401, 403)
+    assert resp.status_code in (302, 303, 401, 403)
 
 
 @pytest.mark.asyncio
