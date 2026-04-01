@@ -9,7 +9,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from auth_utils import LoginRequiredException
 
-from routers import auth, communities, events, discussions, map as map_router
+from routers import auth, discussions
 
 from database import Base, engine
 
@@ -29,18 +29,9 @@ templates = Jinja2Templates(directory="templates")
 app.state.templates = templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# register all the routers
+# register routers
 app.include_router(auth.router, prefix='/auth', tags=['auth'])
-app.include_router(communities.router, prefix='/communities', tags=['communities'])
-app.include_router(events.router, prefix='/events', tags=['events'])
 app.include_router(discussions.router, prefix='/events', tags=['discussions'])
-app.include_router(map_router.router, prefix='/map', tags=['map'])
-
-
-# homepage just redirects to communities for now
-@app.get("/")
-async def homepage():
-    return RedirectResponse(url="/communities", status_code=302)
 
 
 @app.exception_handler(LoginRequiredException)
