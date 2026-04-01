@@ -295,6 +295,6 @@ async def view_event_detail(
 # Any HTML or HTMX
 # Some functions need to return text rather than raw objects 
 
-# Create event form
+# Test forms
 
 # when registering for an event partially update button to "Unregister"
