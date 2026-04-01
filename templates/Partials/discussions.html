@@ -169,6 +169,7 @@
               hx-swap="beforeend"
               hx-on::after-request="hideReplyForm(); this.reset();">
             <input type="hidden" name="parent_id" value="">
+            <input type="hidden" name="depth" value="0">
             <textarea name="content" class="textarea textarea-bordered textarea-sm" style="width:100%; font-size:0.875rem;"
                       placeholder="Write your reply..." required rows="2"></textarea>
             <div class="reply-btn-row">
@@ -188,6 +189,14 @@
         body.appendChild(form);
         form.querySelector('[name=parent_id]').value = msgId;
         form.querySelector('.replying-to').textContent = 'Replying to ' + authorName;
+        // Calculate depth: count ancestor .comment-wrap elements + 1 for the reply
+        var depth = 0;
+        var el = target;
+        while (el) {
+            if (el.classList && el.classList.contains('comment-wrap')) depth++;
+            el = el.parentElement;
+        }
+        form.querySelector('[name=depth]').value = depth;
         // Point HTMX target to parent's replies container
         form.querySelector('form').setAttribute('hx-target', '#replies-' + msgId);
         htmx.process(form.querySelector('form'));

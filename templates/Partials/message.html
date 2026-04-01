@@ -1,7 +1,7 @@
 {# Reddit-style threaded comment macro — uses inline styles + CSS classes from discussions.html #}
 {% macro render_message(msg, event_id, user, depth=0) %}
 {% set max_depth = 8 %}
-{% set px = (depth if depth <= max_depth else max_depth) * 24 %}
+{% set px = (depth if depth <= max_depth else max_depth) * 36 %}
 
 <div id="message-{{ msg.id }}" class="comment-wrap" {% if depth > 0 %}style="margin-left: {{ px }}px"{% endif %}>
     <div class="comment">
@@ -65,5 +65,5 @@
 
 {# Used when POST returns a single new message #}
 {% if message %}
-    {{ render_message(message, event_id, user) }}
+    {{ render_message(message, event_id, user, depth=depth|default(0)) }}
 {% endif %}
