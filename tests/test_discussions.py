@@ -21,14 +21,15 @@ async def register_user_for_event(db, user_id, event_id):
 @pytest.mark.asyncio
 async def test_discussions_require_login(client, seed_event):
     resp = await client.get(f"/events/{seed_event.id}/discussions", follow_redirects=False)
-    assert resp.status_code in (302, 401, 403)
+    assert resp.status_code in (302, 303, 401, 403)
 
 
 @pytest.mark.asyncio
 async def test_discussions_require_registration(auth_client, seed_event):
-    """A logged-in user who is NOT registered for the event should be denied."""
+    """A logged-in user who is NOT registered sees a 'register to join' message."""
     resp = await auth_client.get(f"/events/{seed_event.id}/discussions", follow_redirects=False)
-    assert resp.status_code in (403, 302)
+    assert resp.status_code == 200
+    assert "Register" in resp.text or "register" in resp.text
 
 
 # ── View discussions ─────────────────────────────────────────────────

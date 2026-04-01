@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Form
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -16,6 +16,11 @@ async def get_event_discussions(
     db: AsyncSession = Depends(get_db),
     current_user: models.User = Depends(auth_utils.require_current_user)
 ):
+    # 0. Check event exists
+    event = (await db.execute(select(models.Event).where(models.Event.id == event_id))).scalars().first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found.")
+
     # 1. Authorization: Only registered attendees
     reg_stmt = select(models.Registration).where(
         models.Registration.event_id == event_id,
@@ -23,7 +28,12 @@ async def get_event_discussions(
     )
     result = await db.execute(reg_stmt)
     if not result.scalars().first():
-        raise HTTPException(status_code=403, detail="Must be registered to view discussions.")
+        return HTMLResponse(
+            '<div style="text-align:center;padding:32px 16px;opacity:0.5;">'
+            '<p style="font-weight:600;margin-bottom:4px;">Join the conversation</p>'
+            '<p style="font-size:0.875rem;">Register for this event to view and participate in the discussion.</p>'
+            '</div>'
+        )
     
     # 2. Fetch all messages with authors
     msg_stmt = select(models.Message).where(
@@ -45,10 +55,13 @@ async def get_event_discussions(
             if parent:
                 parent.temp_replies.append(msg)
 
-    templates = request.app.state.templates 
+    # Sort roots newest-first
+    roots.sort(key=lambda m: m.timestamp, reverse=True)
+
+    templates = request.app.state.templates
     return templates.TemplateResponse("partials/discussions.html", {
         "request": request,
-        "roots": roots, 
+        "roots": roots,
         "event_id": event_id,
         "user": current_user
     })
@@ -60,7 +73,8 @@ async def post_message(
     db: AsyncSession = Depends(get_db),
     current_user: models.User = Depends(auth_utils.require_current_user),
     content: str = Form(...),
-    parent_id: int | None = Form(None)
+    parent_id: int | None = Form(None),
+    depth: int = Form(0)
 ):
     # Verify registration
     reg_stmt = select(models.Registration).where(
@@ -86,7 +100,7 @@ async def post_message(
         "message": new_message,
         "event_id": event_id,
         "user": current_user,
-        "is_new": True
+        "depth": depth,
     })
 
 @router.delete("/{event_id}/discussions/{message_id}")
@@ -114,4 +128,4 @@ async def delete_message(
     # actually delete the message from the db
     await db.delete(message)
     await db.commit()
-    return RedirectResponse(url=f"/events/{event_id}/discussions", status_code=302)
+    return Response(status_code=200)
