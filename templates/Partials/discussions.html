@@ -5,12 +5,12 @@
         <h3 class="card-title text-lg border-b pb-4 mb-4">Community Conversation</h3>
 
         {# Main "New Thread" Form #}
-        <form hx-post="/events/{{ event_id }}/discussions" 
-              hx-target="#discussion-thread" 
-              hx-swap="afterbegin" 
+        <form hx-post="/events/{{ event_id }}/discussions"
+              hx-target="#discussion-thread"
+              hx-swap="afterbegin"
               hx-on::after-request="this.reset()"
               class="mb-8">
-            <textarea name="content" class="textarea textarea-bordered w-full" 
+            <textarea name="content" class="textarea textarea-bordered w-full"
                       placeholder="Start a new discussion thread..." required></textarea>
             <div class="flex justify-end mt-2">
                 <button type="submit" class="btn btn-primary btn-sm">Post Update</button>
@@ -19,11 +19,18 @@
 
         {# The list of top-level messages #}
         <div id="discussion-thread" class="divide-y divide-base-300">
-            {% for root in roots %}
-                <div class="py-4">
-                    {{ render_message(root, event_id, user) }}
+            {% if roots %}
+                {% for root in roots %}
+                    <div class="py-4">
+                        {{ render_message(root, event_id, user) }}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-12 opacity-60">
+                    <p class="text-lg font-semibold">No discussions yet</p>
+                    <p class="text-sm mt-1">Be the first to start a conversation about this event.</p>
                 </div>
-            {% endfor %}
+            {% endif %}
         </div>
     </div>
 </div>
