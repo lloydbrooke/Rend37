@@ -65,10 +65,19 @@ async def create_event(
 
 
 # Returning events
-@router.get("/")
-async def get_all_events(db: Session = Depends(get_db)):
+# @router.get("/")
+# async def get_all_events(db: Session = Depends(get_db)):
+#    events = db.query(Event).all()
+#    return events
+    
+@router.get("/view")
+async def view_events(request: Request, db: Session = Depends(get_db)):
     events = db.query(Event).all()
-    return events
+
+    return templates.TemplateResponse("events.html", {
+        "request": request,
+        "events": events
+    })
 
 @router.get("/{event_id}")
 async def get_event(
@@ -79,6 +88,7 @@ async def get_event(
     if (not event):
         raise HTTPException(status_code= 404, detail= "Event Not found!")
     return event
+    
 
 
 # Register and unregister for events 
@@ -260,6 +270,23 @@ async def get_nearby_events(
     nearby_events.sort(key=lambda x: x["distance_km"])
 
     return nearby_events
+
+    # Display Event Detail
+@router.get("/{event_id}/view")
+async def view_event_detail(
+    event_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code= 404, detail= "Event not found")
+    return templates.TemplateResponse("event_detail.html", {
+        "request": request,
+        "event": event
+    })
+
+
 
 
 # Still needed funcionality:
