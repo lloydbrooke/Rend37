@@ -14,14 +14,24 @@ async def get_event_discussions(
     event_id: int,
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: models.User = Depends(auth_utils.require_current_user)
+    current_user: models.User | None = Depends(auth_utils.get_current_user)
 ):
-    # 0. Check event exists
+    # 0. Must be logged in — return friendly prompt (not a redirect) for HTMX
+    if not current_user:
+        login_url = f"/auth/login?next=%2Fevents%2F{event_id}"
+        return HTMLResponse(
+            '<div style="text-align:center;padding:32px 16px;opacity:0.5;">'
+            '<p style="font-weight:600;margin-bottom:4px;">Join the conversation</p>'
+            f'<p style="font-size:0.875rem;"><a href="{login_url}" style="text-decoration:underline;">Log in</a> to view and participate in the discussion.</p>'
+            '</div>'
+        )
+
+    # 1. Check event exists
     event = (await db.execute(select(models.Event).where(models.Event.id == event_id))).scalars().first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found.")
 
-    # 1. Authorization: Only registered attendees
+    # 2. Authorization: Only registered attendees
     reg_stmt = select(models.Registration).where(
         models.Registration.event_id == event_id,
         models.Registration.user_id == current_user.id

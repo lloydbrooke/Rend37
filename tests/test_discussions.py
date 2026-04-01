@@ -20,8 +20,10 @@ async def register_user_for_event(db, user_id, event_id):
 
 @pytest.mark.asyncio
 async def test_discussions_require_login(client, seed_event):
+    """A logged-out user sees a 'log in' prompt, not a redirect."""
     resp = await client.get(f"/events/{seed_event.id}/discussions", follow_redirects=False)
-    assert resp.status_code in (302, 303, 401, 403)
+    assert resp.status_code == 200
+    assert "Log in" in resp.text or "log in" in resp.text
 
 
 @pytest.mark.asyncio
