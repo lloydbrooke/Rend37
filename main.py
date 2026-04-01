@@ -1,17 +1,26 @@
-from contextlib import asynccontextmanager
+from typing import Annotated
 
-from fastapi import FastAPI, Request, status
-from fastapi.responses import RedirectResponse
+from contextlib import asynccontextmanager
+from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
+
+from fastapi import FastAPI, Request, HTTPException, Response, status, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from auth_utils import LoginRequiredException
+import auth_utils
+from auth_utils import require_current_user, get_current_user,LoginRequiredException
+import models
 
 from routers import auth, discussions
 
-from database import Base, engine
+from database import Base, engine, get_db
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
