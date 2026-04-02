@@ -27,7 +27,7 @@
                 <button class="btn btn-primary" onclick="document.getElementById('edit_modal').showModal()">
                     Edit
                 </button>
-                <form method="DELETE" action="/communities/{{ community.id }}" style="display: inline;">
+                <form method="POST" action="/communities/{{ community.id }}/delete" style="display: inline;">
                     <button type="submit" class="btn btn-error" onclick="return confirm('Are you sure you want to delete this community?')">
                         Delete
                     </button>

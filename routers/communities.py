@@ -154,7 +154,7 @@ async def update_community(
         )
 
 
-@router.delete("/{community_id}")
+@router.post("/{community_id}/delete")
 async def delete_community(
     community_id: int,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
