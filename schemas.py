@@ -2,6 +2,7 @@ from typing import Type, Annotated
 import inspect
 from pydantic import BaseModel, EmailStr
 from fastapi import Form, Depends
+from datetime import datetime
 
 def as_form(cls: Type[BaseModel]):
     new_params = [
@@ -47,6 +48,9 @@ class EventCreateForm(BaseModel):
     capacity_limit: int
     latitude: float
     longitude: float
+    date_time: datetime
+    location_name: str
+    community_id: int
 
 
 '''follow the above pattern to make more forms like for community creation event creation etc.'''

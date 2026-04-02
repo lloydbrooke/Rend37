@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+    <h1 class="text-3xl font-bold">{{ event.title }}</h1>
+
+    <p>{{ event.description }}</p>
+    <p>{{ event.category }}</p>
+    <p>{{ event.location_name }}</p>
+    <p>{{ event.date_time.strftime('%B %d, %Y at %H:%M') }}</p>
+
+    <!-- REGISTER BUTTON -->
+    <div id="register-btn-{{ event.id }}">
+        {% if is_registered %}
+            <button 
+                hx-post="/events/{{ event.id }}/unregister"
+                hx-target="#register-btn-{{ event.id }}"
+                hx-swap="outerHTML"
+                class="btn btn-error">
+                Unregister
+            </button>
+        {% else %}
+            <button 
+                hx-post="/events/{{ event.id }}/register"
+                hx-target="#register-btn-{{ event.id }}"
+                hx-swap="outerHTML"
+                class="btn btn-primary">
+                Register
+            </button>
+        {% endif %}
+    </div>
+
+    <!-- DELETE BUTTON -->
+    <div>
+        {% if user and user.id == event.organizer_id %}
+            <button 
+                hx-delete="/events/{{ event.id }}"
+                hx-target="body"
+                hx-swap="innerHTML"
+                class="btn btn-error mt-4">
+                Delete Event
+            </button>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
