@@ -360,7 +360,10 @@ async def get_attendees(
 # add a create events button 
 
 
-# added checking if user is part of a comunity before creating an event 
-# added styling for the create event form
-# added drop down for slecting the comunity (create_event_form() | create_event()| create_event.html)
-# added a create event button 
+
+# Changed event_details to include a map place holder that redirects, include a view atendees button 
+# improved the visuals of create event, delete event and register/unregister buttons 
+
+# Auto logs out in create form 
+# When trying to register while logged out it renders the register form in a weird way 
+

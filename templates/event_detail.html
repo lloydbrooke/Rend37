@@ -3,46 +3,69 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
 
-    <h1 class="text-3xl font-bold">{{ event.title }}</h1>
+    <a href="/events" class="text-sm text-gray-500 hover:text-gray-300 mb-6 inline-block">&larr; Back to Events</a>
 
-    <p>{{ event.description }}</p>
-    <p>{{ event.category }}</p>
-    <p>{{ event.location_name }}</p>
-    <p>{{ event.date_time.strftime('%B %d, %Y at %H:%M') }}</p>
-
-    <!-- REGISTER BUTTON -->
-    <div id="register-btn-{{ event.id }}">
-        {% if is_registered %}
-            <button 
-                hx-post="/events/{{ event.id }}/unregister"
-                hx-target="#register-btn-{{ event.id }}"
-                hx-swap="outerHTML"
-                class="btn btn-error">
-                Unregister
-            </button>
-        {% else %}
-            <button 
-                hx-post="/events/{{ event.id }}/register"
-                hx-target="#register-btn-{{ event.id }}"
-                hx-swap="outerHTML"
-                class="btn btn-primary">
-                Register
-            </button>
-        {% endif %}
+    <div class="mb-4">
+        <div class="badge badge-outline text-gray-400 border-gray-600 mb-2">{{ event.category }}</div>
+        <h1 class="text-3xl font-bold">{{ event.title }}</h1>
     </div>
 
-    <!-- DELETE BUTTON -->
-    <div>
+    <div class="text-sm text-gray-500 space-y-1 mb-6">
+        <p>📍 {{ event.location_name }}</p>
+        <p>🗓 {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}</p>
+    </div>
+
+    <p class="mb-6">{{ event.description }}</p>
+
+    
+    <div class="mb-6">
+        <h2 class="text-lg font-semibold mb-2">Location</h2>
+        <!-- MAP PLACEHOLDER -->
+            <a href="/map" class="rounded-lg bg-base-300 border border-gray-600 flex items-center justify-center hover:bg-base-200 transition cursor-pointer" style="height: 300px;">
+                <p class="text-gray-400 text-lg">Map placeholder</p>
+            </a>
+    </div>
+
+    <div class="flex gap-2 mt-4">
+
+        <!-- REGISTER BUTTON -->
+        <div id="register-btn-{{ event.id }}">
+            {% if is_registered %}
+                <button
+                    hx-post="/events/{{ event.id }}/unregister"
+                    hx-target="#register-btn-{{ event.id }}"
+                    hx-swap="outerHTML"
+                    class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+                    Unregister
+                </button>
+            {% else %}
+                <button
+                    hx-post="/events/{{ event.id }}/register"
+                    hx-target="#register-btn-{{ event.id }}"
+                    hx-swap="outerHTML"
+                    class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+                    Register
+                </button>
+            {% endif %}
+        </div>
+    
+        <!-- ORGANIZER BUTTONS -->
         {% if user and user.id == event.organizer_id %}
-            <button 
+            <a href="/events/{{ event.id }}/attendees"
+               class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+                View Attendees
+            </a>
+            <button
                 hx-delete="/events/{{ event.id }}"
                 hx-target="body"
                 hx-swap="innerHTML"
-                class="btn btn-error mt-4">
+                class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
                 Delete Event
             </button>
         {% endif %}
+    
     </div>
+
 
 </div>
 {% endblock %}
