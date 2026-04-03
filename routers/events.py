@@ -1,3 +1,4 @@
+from models import Event, Registration, User, Community, CommunityMember
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
@@ -24,10 +25,26 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/create")
 async def create_event_form(
     request: Request,
-    user: User = Depends(require_current_user)
+    user: User = Depends(require_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
+    # Fetch communities the user is a member of
+    result = await db.execute(
+        select(Community)
+        .join(CommunityMember, Community.id == CommunityMember.community_id)
+        .filter(CommunityMember.user_id == user.id)
+    )
+    communities = result.scalars().all()
+
+    if not communities:
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of a community to create an event"
+        )
+
     return templates.TemplateResponse("create_event.html", {
-        "request": request
+        "request": request,
+        "communities": communities
     })
 
 
@@ -37,7 +54,16 @@ async def create_event(
     user: User = Depends(require_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    # Verify user is actually a member of the submitted community
+    result = await db.execute(
+        select(CommunityMember).filter(
+            CommunityMember.user_id == user.id,
+            CommunityMember.community_id == event.community_id
+        )
+    )
     # Validation
+    if not result.scalars().first():
+        raise HTTPException(status_code=403, detail="You are not a member of this community")
     if event.capacity_limit is None:
         raise HTTPException(status_code=400, detail="Must have a capacity limit")
     if event.capacity_limit <= 0:
@@ -330,3 +356,11 @@ async def get_attendees(
 
 
 
+# When registering the button doesnt change unregister until you refresh the code 
+# add a create events button 
+
+
+# added checking if user is part of a comunity before creating an event 
+# added styling for the create event form
+# added drop down for slecting the comunity (create_event_form() | create_event()| create_event.html)
+# added a create event button 

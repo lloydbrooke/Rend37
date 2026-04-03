@@ -4,6 +4,13 @@
 <div class="max-w-4xl mx-auto">
 
     <h1 class="text-3xl font-bold mb-6">Events</h1>
+    {% if user %}
+        <div class="mb-6">
+            <a href="/events/create" class="btn btn-primary">
+                Create Event
+            </a>
+        </div>
+    {% endif %}
 
     {% if events %}
         <div class="grid gap-4 md:grid-cols-2">
@@ -40,6 +47,8 @@
             <span>No events yet.</span>
         </div>
     {% endif %}
+
+    
 
 </div>
 {% endblock %}
