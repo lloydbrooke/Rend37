@@ -6,8 +6,11 @@
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-3xl font-bold">Events</h1>
         {% if user %}
-            <a href="/events/create" class="btn btn-sm btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+            <a href="/events/create" class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
                 Create Event
+            </a>
+            <a href="/events/nearby" class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+                View Nearby Events
             </a>
         {% endif %}
     </div>
@@ -48,5 +51,4 @@
         </div>
     {% endif %}
 
-</div>
 {% endblock %}

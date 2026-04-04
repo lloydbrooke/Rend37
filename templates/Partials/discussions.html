@@ -1,0 +1,29 @@
+{% from "partials/message.html" import render_message %}
+
+<div class="card bg-base-100 shadow-xl border border-base-300">
+    <div class="card-body">
+        <h3 class="card-title text-lg border-b pb-4 mb-4">Community Conversation</h3>
+
+        {# Main "New Thread" Form #}
+        <form hx-post="/events/{{ event_id }}/discussions" 
+              hx-target="#discussion-thread" 
+              hx-swap="afterbegin" 
+              hx-on::after-request="this.reset()"
+              class="mb-8">
+            <textarea name="content" class="textarea textarea-bordered w-full" 
+                      placeholder="Start a new discussion thread..." required></textarea>
+            <div class="flex justify-end mt-2">
+                <button type="submit" class="btn btn-primary btn-sm">Post Update</button>
+            </div>
+        </form>
+
+        {# The list of top-level messages #}
+        <div id="discussion-thread" class="divide-y divide-base-300">
+            {% for root in roots %}
+                <div class="py-4">
+                    {{ render_message(root, event_id, user) }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

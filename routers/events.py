@@ -99,32 +99,39 @@ async def create_event(
 # Passed Tests
 @router.get("/nearby")
 async def get_nearby_events(
+    request: Request,
     lat: float = Query(..., ge=-90, le=90),
     long: float = Query(..., ge=-180, le=180),
     radius_km: float = Query(10, gt=0),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(Event))
-    events = result.scalars().all()
+    all_events = result.scalars().all()
 
     nearby_events = []
-
-    for event in events:
+    for event in all_events:
         distance = haversine(
             (lat, long),
             (event.latitude, event.longitude)
         )
-
         if distance <= radius_km:
             nearby_events.append({
-                "id": event.id,
-                "title": event.title,
+                "event": event,
                 "distance_km": round(distance, 2)
             })
 
     nearby_events.sort(key=lambda x: x["distance_km"])
 
+    # Return JSON if requested, otherwise HTMX partial
     return nearby_events
+    # accept = request.headers.get("accept", "")
+    # if "application/json" in accept:
+    #     return [{"id": e["event"].id, "title": e["event"].title, "distance_km": e["distance_km"]} for e in nearby_events]
+
+    # return templates.TemplateResponse("Partials/nearby_events.html", {
+    #     "request": request,
+    #     "events": nearby_events
+    # })
 
 
 
@@ -210,7 +217,7 @@ async def register_for_event(
         count = len(result.scalars().all())
 
         if count >= event.capacity_limit:
-            return templates.TemplateResponse("register_button.html", {
+            return templates.TemplateResponse("Partials/register_button.html", {
                 "request": request,
                 "event": event,
                 "is_registered": False,
@@ -222,7 +229,7 @@ async def register_for_event(
     db.add(registration)
     await db.commit()
 
-    return templates.TemplateResponse("register_button.html", {
+    return templates.TemplateResponse("Partials/register_button.html", {
         "request": request,
         "event": event,
         "is_registered": True 
@@ -254,7 +261,7 @@ async def unregister_event(
     await db.delete(registration)
     await db.commit()
 
-    return templates.TemplateResponse("register_button.html", {
+    return templates.TemplateResponse("Partials/register_button.html", {
         "request": request,
         "event": event,
         "is_registered": False  
@@ -369,7 +376,7 @@ async def get_attendees(
     )
     attendees = attendees_result.scalars().all()
 
-    return templates.TemplateResponse("attendee_list.html", {
+    return templates.TemplateResponse("Partials/attendee_list.html", {
         "request": request,
         "event": event,
         "attendees": attendees,
@@ -381,20 +388,18 @@ async def get_attendees(
 
 
 
-# When registering the button doesnt change unregister until you refresh the code 
-# add a create events button 
+# ====== CHANGED =======
+# coppied in /router/discussion.py and /templates/Partials from the feature/event-discussions branch
+# Implemnted the discussions into event_detail.html
+# Replaced the place holder for map in the event_details section with an interative map 
+# Added cascading dletes for message replies in models.py
+# Moved register_button.html and attendee_list.html into Partials folder and added a nearby_events.html
 
 
-
-# Changed event_details.html to include a map place holder that redirects, include a view atendees button 
-# improved the visuals of create event, delete event and register/unregister buttons 
-
+# ====== ISSUES =========
+# when implementing the discussions files i had to change how the template object was fetched, from request.app.state.templates to templates = Jinja2Templates(directory="templates")  
 # Auto logs out in create form 
 # When trying to register while logged out it renders the register form in a weird way 
-
-# added an error message if capacity is reached when a new user trys to register 
-# moved the register button html from events_detials.html to register_button.html
-# deleted edit_event.html form 
-# changed the template returned from the event/{event_id}/edit and event/create path to event_form 
-# added the map picker for long/lat on create/edit form 
-# added an attendees_list.html, and changed the /attendees route in events.py to accomodate
+# No partial reload for the discussion feature after registering/unregistering for an event
+# Lots of red underlined code in event details and event forms to do with the map, works as normal tho
+# No cascading delete for user registration and messages, so if a user is deleted nothing will change 

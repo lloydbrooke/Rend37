@@ -18,8 +18,8 @@ import auth_utils
 from auth_utils import require_current_user, get_current_user,LoginRequiredException
 import models
 
-from routers import auth
-from routers import events 
+from routers import auth, events, discussions
+
 
 from database import Base, engine, get_db
 
@@ -35,12 +35,15 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
+
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 '''example of how to register a route'''
 app.include_router(auth.router, prefix='/auth', tags=['auth'])
 app.include_router(events.router)
+app.include_router(discussions.router, prefix="/events")
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/communities", response_class=HTMLResponse)
