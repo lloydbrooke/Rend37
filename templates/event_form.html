@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  select[name="community_id"] option {
+    background: #2a2a35;
+    color: inherit;
+  }
+</style>
+
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <div class="rounded-2xl p-8" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.15);">
+
+    <h2 class="text-2xl font-bold text-base-content mb-6">{% if event %}Edit event{% else %}Create event{% endif %}</h2>
+    <p class="text-sm text-base-content/50 mb-6">Fill in the details below to publish a new event to your community.</p>
+
+    <form method="post" action="{% if event %}/events/{{ event.id }}/edit{% else %}/events/create{% endif %}" class="space-y-5">
+
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-sm">Community</span></label>
+        <select class="select select-bordered select-sm w-full" style="background: rgba(255,255,255,0.07); color: inherit;" name="community_id" required>
+          <option disabled selected value="">Select a community</option>
+          {% for community in communities %}
+            <option value="{{ community.id }}" {% if event and event.community_id == community.id %}selected{% endif %}>{{ community.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="divider my-2"></div>
+
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-sm">Title</span></label>
+        <input class="input input-bordered input-sm w-full" style="background: rgba(255,255,255,0.07);" type="text" name="title" placeholder="Give your event a name" value="{{ event.title if event else '' }}" required />
+      </div>
+
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-sm">Description</span></label>
+        <textarea class="textarea textarea-bordered w-full text-sm leading-relaxed" style="background: rgba(255,255,255,0.07);" name="description" placeholder="What's this event about?" rows="4" required>{{ event.description if event else '' }}</textarea>
+      </div>
+
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-sm">Category</span></label>
+        <input class="input input-bordered input-sm w-full" style="background: rgba(255,255,255,0.07);" type="text" name="category" placeholder="e.g. Workshop, Social, Meetup" value="{{ event.category if event else '' }}" required />
+      </div>
+
+      <div class="divider my-2"></div>
+      <p class="text-xs font-medium tracking-widest uppercase text-base-content/30">Location</p>
+
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-sm">Location name</span></label>
+        <input class="input input-bordered input-sm w-full" style="background: rgba(255,255,255,0.07);" type="text" name="location_name" placeholder="e.g. The Old Vic, Room 4B" value="{{ event.location_name if event else '' }}" required />
+      </div>
+
+      <!-- MAP PICKER -->
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-sm">Pin your location</span></label>
+        <p class="text-xs text-base-content/40 mb-2">Click the map to drop a pin — coordinates will fill in automatically.</p>
+        <div id="map-picker" class="rounded-lg border border-gray-600" style="height: 300px; z-index: 0;"></div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="form-control">
+          <label class="label pb-1"><span class="label-text text-sm">Latitude</span></label>
+          <input class="input input-bordered input-sm w-full" style="background: rgba(255,255,255,0.07);" type="number" step="any" name="latitude" id="latitude" placeholder="Click map to fill" value="{{ event.latitude if event else '' }}" required />
+        </div>
+        <div class="form-control">
+          <label class="label pb-1"><span class="label-text text-sm">Longitude</span></label>
+          <input class="input input-bordered input-sm w-full" style="background: rgba(255,255,255,0.07);" type="number" step="any" name="longitude" id="longitude" placeholder="Click map to fill" value="{{ event.longitude if event else '' }}" required />
+        </div>
+      </div>
+
+      <div class="divider my-2"></div>
+      <p class="text-xs font-medium tracking-widest uppercase text-base-content/30">Details</p>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="form-control">
+          <label class="label pb-1"><span class="label-text text-sm">Date &amp; time</span></label>
+          <input class="input input-bordered input-sm w-full" style="background: rgba(255,255,255,0.07);" type="datetime-local" name="date_time" value="{{ event.date_time.strftime('%Y-%m-%dT%H:%M') if event else '' }}" required />
+        </div>
+        <div class="form-control">
+          <label class="label pb-1"><span class="label-text text-sm">Capacity limit</span></label>
+          <input class="input input-bordered input-sm w-full" style="background: rgba(255,255,255,0.07);" type="number" name="capacity_limit" placeholder="50" min="1" value="{{ event.capacity_limit if event else '' }}" required />
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-neutral w-full mt-4">{% if event %}Save changes{% else %}Create event{% endif %}</button>
+
+    </form>
+  </div>
+</div>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const defaultLat = {{ event.latitude if event else 54.0 }};
+    const defaultLng = {{ event.longitude if event else -2.0 }};
+    const defaultZoom = {{ 15 if event else 6 }};
+
+    const map = L.map('map-picker').setView([defaultLat, defaultLng], defaultZoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let marker = {% if event %} L.marker([{{ event.latitude }}, {{ event.longitude }}]).addTo(map) {% else %} null {% endif %};
+
+    map.on('click', function(clickEvent) {
+        const lat = clickEvent.latlng.lat.toFixed(6);
+        const lng = clickEvent.latlng.lng.toFixed(6);
+
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+
+        if (marker) {
+            marker.setLatLng(clickEvent.latlng);
+        } else {
+            marker = L.marker(clickEvent.latlng).addTo(map);
+        }
+    });
+</script>
+
+{% endblock %}

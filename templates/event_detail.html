@@ -10,14 +10,14 @@
         <h1 class="text-3xl font-bold">{{ event.title }}</h1>
     </div>
 
-    <div class="text-sm text-gray-500 space-y-1 mb-6">
+    <div class="text-sm text-gray-500 space-y-1 mb-4">
         <p>📍 {{ event.location_name }}</p>
         <p>🗓 {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}</p>
+        <p>👥 {{ attendee_count }} / {{ event.capacity_limit }} spots taken</p>
     </div>
 
     <p class="mb-6">{{ event.description }}</p>
 
-    
     <div class="mb-6">
         <h2 class="text-lg font-semibold mb-2">Location</h2>
         <!-- MAP PLACEHOLDER -->
@@ -28,44 +28,29 @@
 
     <div class="flex gap-2 mt-4">
 
-        <!-- REGISTER BUTTON -->
-        <div id="register-btn-{{ event.id }}">
-            {% if is_registered %}
-                <button
-                    hx-post="/events/{{ event.id }}/unregister"
-                    hx-target="#register-btn-{{ event.id }}"
-                    hx-swap="outerHTML"
-                    class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
-                    Unregister
-                </button>
-            {% else %}
-                <button
-                    hx-post="/events/{{ event.id }}/register"
-                    hx-target="#register-btn-{{ event.id }}"
-                    hx-swap="outerHTML"
-                    class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
-                    Register
-                </button>
-            {% endif %}
-        </div>
-    
-        <!-- ORGANIZER BUTTONS -->
-        {% if user and user.id == event.organizer_id %}
-            <a href="/events/{{ event.id }}/attendees"
-               class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
-                View Attendees
-            </a>
-            <button
-                hx-delete="/events/{{ event.id }}"
-                hx-target="body"
-                hx-swap="innerHTML"
-                class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
-                Delete Event
-            </button>
-        {% endif %}
-    
-    </div>
+        {% include "register_button.html" %}
 
+        {% if user and user.id == event.organizer_id %}
+        <a href="/events/{{ event.id }}/attendees"
+            class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+            View Attendees
+        </a>
+        <a href="/events/{{ event.id }}/edit"
+            class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+            Edit Event
+        </a>
+        <button
+            hx-delete="/events/{{ event.id }}"
+            hx-target="body"
+            hx-swap="innerHTML"
+            class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+            Delete Event
+        </button>
+        {% endif %}
+
+    </div>
 
 </div>
 {% endblock %}
+
+

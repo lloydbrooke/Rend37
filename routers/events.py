@@ -42,7 +42,7 @@ async def create_event_form(
             detail="You must be a member of a community to create an event"
         )
 
-    return templates.TemplateResponse("create_event.html", {
+    return templates.TemplateResponse("event_form.html", {
         "request": request,
         "communities": communities
     })
@@ -144,36 +144,38 @@ async def get_all_events(db: AsyncSession = Depends(get_db)):
 async def get_event(
     event_id: int,
     request: Request,
-    user: User = Depends(get_current_user),  # allow None
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # Get event
-    result = await db.execute(select(Event).filter(Event.id == event_id))
-    event = result.scalars().first()
+    event_result = await db.execute(select(Event).filter(Event.id == event_id))
+    event = event_result.scalars().first()
 
     if not event:
         raise HTTPException(status_code=404, detail="Event Not found!")
 
-    #check if user is registered
+    count_result = await db.execute(
+        select(Registration).filter(Registration.event_id == event_id)
+    )
+    attendee_count = len(count_result.scalars().all())
+
     if user:
-        result = await db.execute(
+        reg_result = await db.execute(
             select(Registration).filter(
                 Registration.event_id == event.id,
                 Registration.user_id == user.id
             )
         )
-        is_registered = result.scalars().first() is not None
+        is_registered = reg_result.scalars().first() is not None
     else:
         is_registered = False
 
-    #Return TEMPLATE 
     return templates.TemplateResponse("event_detail.html", {
         "request": request,
         "event": event,
         "user": user,
-        "is_registered": is_registered
-})
-
+        "is_registered": is_registered,
+        "attendee_count": attendee_count
+    })
 # Register and unregister for events
 # passes regiter test if already logged in 
 # But if prompted to log in, after doing so is redirected to /register and gives a 405 error
@@ -208,17 +210,24 @@ async def register_for_event(
         count = len(result.scalars().all())
 
         if count >= event.capacity_limit:
-            raise HTTPException(status_code=400, detail="Event is full")
+            return templates.TemplateResponse("register_button.html", {
+                "request": request,
+                "event": event,
+                "is_registered": False,
+                "error": "This event is full."
+        })
+
 
     registration = Registration(event_id=event_id, user_id=user.id)
     db.add(registration)
     await db.commit()
 
-    return templates.TemplateResponse("register_event.html", {
+    return templates.TemplateResponse("register_button.html", {
         "request": request,
         "event": event,
-        "is_registered": True
-})
+        "is_registered": True 
+    })
+
 
 
 @router.post("/{event_id}/unregister")
@@ -245,11 +254,12 @@ async def unregister_event(
     await db.delete(registration)
     await db.commit()
 
-    return templates.TemplateResponse("register_event.html", {
+    return templates.TemplateResponse("register_button.html", {
         "request": request,
         "event": event,
-        "is_registered": False
+        "is_registered": False  
     })
+
 
 
 # Editing events
@@ -285,7 +295,6 @@ async def edit_event(
 
     return RedirectResponse(url=f"/events/{event_id}", status_code=303)
 
-
 @router.get("/{event_id}/edit")
 async def edit_event_form(
     event_id: int,
@@ -302,9 +311,18 @@ async def edit_event_form(
     if event.organizer_id != user.id:
         raise HTTPException(status_code=403, detail="Not authorised")
 
-    return templates.TemplateResponse("edit_event.html", {
+    # Fetch communities the user is a member of
+    result = await db.execute(
+        select(Community)
+        .join(CommunityMember, Community.id == CommunityMember.community_id)
+        .filter(CommunityMember.user_id == user.id)
+    )
+    communities = result.scalars().all()
+
+    return templates.TemplateResponse("event_form.html", {
         "request": request,
-        "event": event
+        "event": event,
+        "communities": communities
     })
 
 
@@ -336,20 +354,27 @@ async def delete_event(
 @router.get("/{event_id}/attendees")
 async def get_attendees(
     event_id: int,
+    request: Request,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Event).filter(Event.id == event_id))
-    event = result.scalars().first()
+    event_result = await db.execute(select(Event).filter(Event.id == event_id))
+    event = event_result.scalars().first()
 
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    result = await db.execute(
+    attendees_result = await db.execute(
         select(User).join(Registration).filter(Registration.event_id == event_id)
     )
-    attendees = result.scalars().all()
+    attendees = attendees_result.scalars().all()
 
-    return [{"id": user.id, "username": user.username} for user in attendees]
+    return templates.TemplateResponse("attendee_list.html", {
+        "request": request,
+        "event": event,
+        "attendees": attendees,
+        "user": user
+    })
 
 
 
@@ -361,9 +386,15 @@ async def get_attendees(
 
 
 
-# Changed event_details to include a map place holder that redirects, include a view atendees button 
+# Changed event_details.html to include a map place holder that redirects, include a view atendees button 
 # improved the visuals of create event, delete event and register/unregister buttons 
 
 # Auto logs out in create form 
 # When trying to register while logged out it renders the register form in a weird way 
 
+# added an error message if capacity is reached when a new user trys to register 
+# moved the register button html from events_detials.html to register_button.html
+# deleted edit_event.html form 
+# changed the template returned from the event/{event_id}/edit and event/create path to event_form 
+# added the map picker for long/lat on create/edit form 
+# added an attendees_list.html, and changed the /attendees route in events.py to accomodate
