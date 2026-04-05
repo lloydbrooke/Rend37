@@ -99,11 +99,14 @@ async def create_event(
 
 # Proximity search
 # Passed Tests
+# Default values for latitude and longitude passed, as placeholder
 @router.get("/nearby")
 async def get_nearby_events(
     request: Request,
-    lat: float = Query(..., ge=-90, le=90),
-    long: float = Query(..., ge=-180, le=180),
+#    lat: float = Query(..., ge=-90, le=90),
+#    long: float = Query(..., ge=-180, le=180),
+    lat: float = Query(52.2405, ge=-90, le=90),
+    long: float = Query(-0.9027, ge=-180, le=180),
     radius_km: float = Query(10, gt=0),
     db: AsyncSession = Depends(get_db)
 ):
@@ -123,9 +126,18 @@ async def get_nearby_events(
             })
 
     nearby_events.sort(key=lambda x: x["distance_km"])
+    if request.headers.get("hx-request"):
+        return templates.TemplateResponse("Partials/nearby_events.html", {
+            "request": request,
+            "events": nearby_events
+        })
+    return templates.TemplateResponse("nearby.html", {
+        "request": request,
+        "events": nearby_events
+    })
 
     # Return JSON if requested, otherwise HTMX partial
-    return nearby_events
+    # return nearby_events
     # accept = request.headers.get("accept", "")
     # if "application/json" in accept:
     #     return [{"id": e["event"].id, "title": e["event"].title, "distance_km": e["distance_km"]} for e in nearby_events]
@@ -134,6 +146,8 @@ async def get_nearby_events(
     #     "request": request,
     #     "events": nearby_events
     # })
+
+    
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -408,3 +422,10 @@ async def get_attendees(
 # No partial reload for the discussion feature after registering/unregistering for an event
 # Lots of red underlined code in event details and event forms to do with the map, works as normal tho
 # No cascading delete for user registration and messages, so if a user is deleted nothing will change 
+
+# ====== CHANGES (5th April update) =======
+# Added some default values for latitude and longitude in the backend for testing purposes, so the nearby events page doesn't come up blank.
+# Altered the nearby events endpoint to return the full nearby.html template if it's a normal request, and the nearby_events partial if it's an HTMX request
+# Added a new page for nearby events, with a form to submit the latitude, longitude and radius, and a section for results. The form submits to the same endpoint but with HTMX, so the results are rendered as a partial in the same page.
+# Added a new template for nearby events (nearby.html)
+# updated attendee list partial to include an avatar for each user, using the ui-avatars service to generate them based on their username.
