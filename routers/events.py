@@ -1,11 +1,13 @@
 from models import Event, Registration, User, Community, CommunityMember
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from models import Event, Registration, User
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_db
+import models
+import auth_utils
 from typing import Annotated
 from schemas import EventCreateForm
 from auth_utils import get_current_user, require_current_user
@@ -16,7 +18,7 @@ from haversine import haversine
 
 
 
-router = APIRouter(prefix="/events", tags=["Events"])
+router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
@@ -134,18 +136,21 @@ async def get_nearby_events(
     # })
 
 
+@router.get("/", response_class=HTMLResponse)
+async def events_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
+    username = auth_utils.get_current_user_from_cookie(request)
+    user = None
+    if username:
+        result = await db.execute(select(models.User).filter(models.User.username == username))
+        user = result.scalars().first()
 
-
-
-# Returning events
-# Passed Tests
-# when clicking on an event in /event it redirects to /event/{event_id}
-@router.get("/")
-async def get_all_events(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Event))
+    result = await db.execute(select(models.Event))
     events = result.scalars().all()
-    return events
-
+    return templates.TemplateResponse("events.html", {
+        "request": request,
+        "user": user,
+        "events": events,
+    })
 
 @router.get("/{event_id}")
 async def get_event(

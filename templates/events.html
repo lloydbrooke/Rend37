@@ -20,27 +20,27 @@
 
             {% for event in events %}
 
-            <a href="/events/{{ event.id }}" class="block">
-                <div class="card bg-base-100 shadow-md hover:shadow-lg transition cursor-pointer">
-                    <div class="card-body">
+                <a href="/events/{{ event.id }}" class="block">
+                    <div class="card bg-base-100 shadow-md hover:shadow-lg transition cursor-pointer">
+                        <div class="card-body">
 
-                        <h2 class="card-title">{{ event.title }}</h2>
+                            <h2 class="card-title">{{ event.title }}</h2>
 
-                        <div class="badge badge-outline">{{ event.category }}</div>
+                            <div class="badge badge-outline">{{ event.category }}</div>
 
-                        <p>{{ event.description }}</p>
+                            <p>{{ event.description }}</p>
 
-                        <p class="text-sm text-gray-500">
-                            {{ event.location_name }}
-                        </p>
+                            <p class="text-sm text-gray-500">
+                                {{ event.location_name }}
+                            </p>
 
-                        <p class="text-sm text-gray-500">
-                            {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}
-                        </p>
+                            <p class="text-sm text-gray-500">
+                                {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}
+                            </p>
 
+                        </div>
                     </div>
-                </div>
-            </a>
+                </a>
 
             {% endfor %}
 
@@ -50,5 +50,6 @@
             <span>No events yet.</span>
         </div>
     {% endif %}
+</div>
 
 {% endblock %}

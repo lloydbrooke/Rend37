@@ -42,7 +42,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # register routers
 app.include_router(auth.router, prefix='/auth', tags=['auth'])
-app.include_router(events.router)
+app.include_router(events.router, prefix="/events", tags=["events"])
 app.include_router(communities.router, prefix='/communities', tags=['communities'])
 app.include_router(discussions.router, prefix='/events', tags=['discussions'])
 
@@ -64,21 +64,6 @@ async def communities_page(request: Request,db: Annotated[AsyncSession, Depends(
     })
 
 
-@app.get("/events", response_class=HTMLResponse)
-async def events_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
-    username = auth_utils.get_current_user_from_cookie(request)
-    user = None
-    if username:
-        result = await db.execute(select(models.User).filter(models.User.username == username))
-        user = result.scalars().first()
-
-    result = await db.execute(select(models.Event))
-    events = result.scalars().all()
-    return templates.TemplateResponse("events.html", {
-        "request": request,
-        "user": user,
-        "events": events,
-    })
 
 @app.get("/events/{event_id}", response_class=HTMLResponse)
 async def event_detail_page(
