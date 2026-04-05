@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+    <h1 class="text-2xl font-bold mb-4">Find Nearby Events</h1>
+
+    <!-- Search Form -->
+    <form hx-get="/events/nearby" hx-target="#results" hx-swap="innerHTML" class="space-y-2">
+        <input name="lat" placeholder="Latitude" class="input input-bordered w-full">
+        <input name="long" placeholder="Longitude" class="input input-bordered w-full">
+        <input name="radius_km" placeholder="Radius (km)" class="input input-bordered w-full">
+
+        <button class="btn btn-primary w-full">Search</button>
+    </form>
+
+    <!-- Results -->
+    <div id="results" class="mt-6">
+        {% if events %}
+        {% include "Partials/nearby_events.html" %}
+        {% else %}
+        <p class="text-gray-400">Results will appear here...</p>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
