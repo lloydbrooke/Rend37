@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto" style="display:flex; flex-direction:column; width:100%;">
+    <header class="card bg-base-200 shadow-sm">
+        <div class="card-body">
+            <div class="badge badge-secondary mb-2">{{ event.category }}</div>
+            <h1 class="text-4xl font-extrabold">{{ event.title }}</h1>
+            <p class="text-lg opacity-80 mt-2">{{ event.description }}</p>
+            <div class="flex flex-wrap gap-6 text-sm mt-6 border-t pt-4 border-base-300">
+                <span class="flex items-center gap-1">📍 {{ event.location_name }}</span>
+                <span class="flex items-center gap-1">📅 {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}</span>
+                <span class="flex items-center gap-1">👤 Organizer: {{ event.organizer.username }}</span>
+            </div>
+        </div>
+    </header>
+
+    <section style="margin-top:32px; width:100%;">
+        <h2 class="text-2xl font-bold" style="margin-bottom:16px;">Community Discussion</h2>
+
+        <div hx-get="/events/{{ event.id }}/discussions"
+             hx-trigger="load"
+             style="width:100%;">
+            <div style="display:flex; justify-content:center; padding:48px 0;">
+                <span class="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

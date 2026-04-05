@@ -1,0 +1,226 @@
+{% from "partials/message.html" import render_message %}
+
+<style>
+    /* ── Comment thread styles ── */
+    .comment {
+        display: flex;
+        gap: 10px;
+        padding: 6px 0;
+    }
+    .comment-left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .comment-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: oklch(var(--n));
+        color: oklch(var(--nc));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .comment-line {
+        width: 2px;
+        flex-grow: 1;
+        background: oklch(var(--bc) / 0.15);
+        border-radius: 2px;
+        margin-top: 4px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .comment-line:hover {
+        background: oklch(var(--p));
+    }
+    .comment-body {
+        flex: 1;
+        min-width: 0;
+        padding-top: 2px;
+    }
+    .comment-header {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .comment-header .author {
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+    .comment-header .sep,
+    .comment-header .time {
+        opacity: 0.4;
+        font-size: 0.75rem;
+    }
+    .comment-content {
+        font-size: 0.875rem;
+        margin-top: 4px;
+        line-height: 1.6;
+        white-space: pre-line;
+        opacity: 0.9;
+    }
+    .comment-actions {
+        display: flex;
+        gap: 2px;
+        margin-top: 6px;
+        align-items: center;
+    }
+    .comment-actions .btn {
+        font-size: 0.75rem;
+        opacity: 0.5;
+        font-weight: 500;
+    }
+    .comment-actions .btn:hover {
+        opacity: 1;
+    }
+    .comment-delete {
+        color: oklch(var(--er)) !important;
+    }
+    .comment-replies {
+        margin-top: 2px;
+    }
+    .comment-wrap + .comment-wrap {
+        border-top: 1px solid oklch(var(--bc) / 0.07);
+    }
+
+    /* ── Reply form ── */
+    .reply-form-box {
+        margin-top: 8px;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid oklch(var(--bc) / 0.12);
+        background: oklch(var(--b2, var(--b1)) / 0.5);
+    }
+    .reply-form-box .replying-to {
+        font-size: 0.75rem;
+        opacity: 0.6;
+        margin-bottom: 8px;
+    }
+    .reply-form-box .reply-btn-row {
+        display: flex;
+        justify-content: flex-end;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    /* ── Composer ── */
+    .discussion-composer {
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid oklch(var(--bc) / 0.12);
+        margin-bottom: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .discussion-composer .composer-btn-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+
+    /* ── Empty state ── */
+    .discussion-empty {
+        text-align: center;
+        padding: 48px 16px;
+        opacity: 0.4;
+    }
+    .discussion-empty p {
+        margin-top: 4px;
+        font-size: 0.875rem;
+    }
+</style>
+
+{# ── New Thread Composer ── #}
+<div class="discussion-composer">
+    <form hx-post="/events/{{ event_id }}/discussions"
+          hx-target="#discussion-thread"
+          hx-swap="afterbegin"
+          hx-on::after-request="this.reset()">
+        <textarea name="content" class="textarea textarea-bordered" style="width:100%; font-size:0.875rem;"
+                  placeholder="What are your thoughts?" required rows="3"></textarea>
+        <div class="composer-btn-row">
+            <button type="submit" class="btn btn-primary btn-sm">Comment</button>
+        </div>
+    </form>
+</div>
+
+{# ── Thread list ── #}
+<div id="discussion-thread">
+    {% if roots %}
+        {% for root in roots %}
+            {{ render_message(root, event_id, user) }}
+        {% endfor %}
+    {% else %}
+        <div class="discussion-empty">
+            <p style="font-weight:600;">No comments yet</p>
+            <p>Be the first to share your thoughts.</p>
+        </div>
+    {% endif %}
+</div>
+
+{# ── Single movable reply form ── #}
+<div id="reply-form-home">
+    <div id="reply-form" class="reply-form-box" style="display:none;">
+        <div class="replying-to"></div>
+        <form hx-post="/events/{{ event_id }}/discussions"
+              hx-swap="beforeend"
+              hx-on::after-request="hideReplyForm(); this.reset();">
+            <input type="hidden" name="parent_id" value="">
+            <input type="hidden" name="depth" value="0">
+            <textarea name="content" class="textarea textarea-bordered textarea-sm" style="width:100%; font-size:0.875rem;"
+                      placeholder="Write your reply..." required rows="2"></textarea>
+            <div class="reply-btn-row">
+                <button type="button" class="btn btn-ghost btn-xs" onclick="hideReplyForm()">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-xs">Reply</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showReplyForm(msgId, authorName) {
+        var form = document.getElementById('reply-form');
+        var target = document.getElementById('message-' + msgId);
+        if (!target) return;
+        var body = target.querySelector('.comment-body');
+        body.appendChild(form);
+        form.querySelector('[name=parent_id]').value = msgId;
+        form.querySelector('.replying-to').textContent = 'Replying to ' + authorName;
+        // Calculate depth: count ancestor .comment-wrap elements + 1 for the reply
+        var depth = 0;
+        var el = target;
+        while (el) {
+            if (el.classList && el.classList.contains('comment-wrap')) depth++;
+            el = el.parentElement;
+        }
+        form.querySelector('[name=depth]').value = depth;
+        // Point HTMX target to parent's replies container
+        form.querySelector('form').setAttribute('hx-target', '#replies-' + msgId);
+        htmx.process(form.querySelector('form'));
+        form.style.display = 'block';
+        form.querySelector('textarea').focus();
+    }
+
+    function hideReplyForm() {
+        var form = document.getElementById('reply-form');
+        form.style.display = 'none';
+        form.querySelector('[name=parent_id]').value = '';
+        form.querySelector('.replying-to').textContent = '';
+        document.getElementById('reply-form-home').appendChild(form);
+    }
+
+    function toggleReplies(msgId) {
+        var el = document.getElementById('replies-' + msgId);
+        if (!el) return;
+        if (el.style.display === 'none') {
+            el.style.display = 'block';
+        } else {
+            el.style.display = 'none';
+        }
+    }
+</script>
