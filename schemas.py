@@ -52,5 +52,13 @@ class EventCreateForm(BaseModel):
     location_name: str
     community_id: int
 
+@as_form
+class CommunityCreateForm(BaseModel):
+    name: str
+    description: str
 
-'''follow the above pattern to make more forms like for community creation event creation etc.'''
+@as_form
+class CommunityUpdateForm(BaseModel):
+    name: str | None = None
+    description: str | None = None
+
