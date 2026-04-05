@@ -18,7 +18,9 @@ import auth_utils
 from auth_utils import require_current_user, get_current_user,LoginRequiredException
 import models
 
-from routers import auth, discussions
+
+from routers import auth, communities, discussions
+
 
 from database import Base, engine, get_db
 
@@ -40,25 +42,26 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # register routers
 app.include_router(auth.router, prefix='/auth', tags=['auth'])
+app.include_router(communities.router, prefix='/communities', tags=['communities'])
 app.include_router(discussions.router, prefix='/events', tags=['discussions'])
 
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/communities", response_class=HTMLResponse)
-async def communities_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
-    username = auth_utils.get_current_user_from_cookie(request)
-    user = None
-    if username:
-        result = await db.execute(select(models.User).filter(models.User.username == username))
-        user = result.scalars().first()
-
-    result = await db.execute(select(models.Community))
+async def communities_page(request: Request,db: Annotated[AsyncSession, Depends(get_db)],user=Depends(get_current_user)):
+    result = await db.execute(select(models.Community).options(
+            selectinload(models.Community.creator),
+            selectinload(models.Community.events),
+            selectinload(models.Community.members).selectinload(models.CommunityMember.user),
+        ))
     communities = result.scalars().all()
+
     return templates.TemplateResponse("communities.html", {
         "request": request,
         "user": user,
         "communities": communities,
     })
+
 
 @app.get("/events", response_class=HTMLResponse)
 async def events_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):

@@ -2,23 +2,86 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Communities</h1>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Communities</h1>
+        {% if user %}
+        <button class="btn btn-primary" onclick="document.getElementById('create_modal').showModal()">
+            Create Community
+        </button>
+        {% else %}
+        <a href="/auth/login" class="btn btn-primary">Login to Create</a>
+        {% endif %}
+    </div>
 
+    <!-- Message / Error Display -->
+    {% if request.query_params.get('msg') %}
+    <div class="alert alert-success mb-4">
+        <span>{{ request.query_params.get('msg').replace('+', ' ') }}</span>
+    </div>
+    {% endif %}
+    
+    {% if request.query_params.get('error') %}
+    <div class="alert alert-error mb-4">
+        <span>{{ request.query_params.get('error').replace('+', ' ') }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Communities Grid -->
     {% if communities %}
         <div class="grid gap-4 md:grid-cols-2">
             {% for community in communities %}
-            <div class="card bg-base-100 shadow-md">
+            <div class="card bg-base-100 shadow-md hover:shadow-lg transition">
                 <div class="card-body">
                     <h2 class="card-title">{{ community.name }}</h2>
-                    <p>{{ community.description }}</p>
+                    <p>{{ community.description[:100] }}{% if community.description|length > 100 %}...{% endif %}</p>
+                    <p class="text-sm text-gray-600">
+                        <strong>Creator:</strong> {{ community.creator.username }}<br>
+                        <strong>Members:</strong> {{ community.members|length }}<br>
+                        <strong>Events:</strong> {{ community.events|length }}
+                    </p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/communities/{{ community.id }}" class="btn btn-sm btn-primary">View</a>
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
     {% else %}
         <div class="alert alert-info">
-            <span>No communities yet. </span>
+            <span>No communities yet. {% if user %}<button onclick="document.getElementById('create_modal').showModal()" class="link">Create one!</button>{% endif %}</span>
         </div>
+    {% endif %}
+
+    <!-- Create Community Modal -->
+    {% if user %}
+    <dialog id="create_modal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Create New Community</h3>
+            <form method="POST" action="/communities/" class="space-y-4 py-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Community Name</span>
+                    </label>
+                    <input type="text" name="name" placeholder="Enter community name" 
+                           class="input input-bordered" required />
+                </div>
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Description</span>
+                    </label>
+                    <textarea name="description" class="textarea textarea-bordered h-24" 
+                              placeholder="Describe your community..." required></textarea>
+                </div>
+                <div class="modal-action">
+                    <button type="button" class="btn" onclick="document.getElementById('create_modal').close()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
     {% endif %}
 </div>
 {% endblock %}

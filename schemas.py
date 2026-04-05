@@ -38,4 +38,14 @@ class UpdateProfileForm(BaseModel):
     username: str | None = None
     email: EmailStr | None = None
 
-'''follow the above pattern to make more forms like for community creation event creation etc.'''
+@as_form
+class CommunityCreateForm(BaseModel):
+    name: str
+    description: str
+
+@as_form
+class CommunityUpdateForm(BaseModel):
+    name: str | None = None
+    description: str | None = None
+
+'''follow the above pattern to make more forms like for event creation etc.'''
