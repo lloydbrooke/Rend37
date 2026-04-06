@@ -22,8 +22,8 @@
 
             <div class="flex text-3xl font-bold text-primary">REND37</div>
 
-            <div class="flex">
-              <input class="input input-bordered " type="text" placeholder="Search...">
+            <div class="flex-1 max-w-xl mx-4">
+              <input id="global-search" class="input input-bordered w-full" type="text" placeholder="Search events, communities...">
             </div>
 
             <div class="flex">
@@ -94,5 +94,28 @@
     </div>
   </div>
 </div>
+<script>
+(function() {
+    var searchInput = document.getElementById('global-search');
+    if (!searchInput) return;
+    var debounceTimer;
+    searchInput.addEventListener('input', function() {
+        var query = this.value.toLowerCase().trim();
+
+        // Client-side: filter cards with data-searchable
+        document.querySelectorAll('[data-searchable]').forEach(function(el) {
+            var text = el.getAttribute('data-searchable').toLowerCase();
+            var item = el.closest('.search-item');
+            if (item) item.style.display = text.includes(query) ? '' : 'none';
+        });
+
+        // Map page: debounced server-side search via loadPins
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function() {
+            if (typeof loadPins === 'function') loadPins();
+        }, 300);
+    });
+})();
+</script>
 </body>
 </html>

@@ -30,7 +30,9 @@
     {% if communities %}
         <div class="grid gap-4 md:grid-cols-2">
             {% for community in communities %}
-            <div class="card bg-base-200 border border-base-content/10 hover:shadow-lg transition">
+            <div class="search-item">
+            <div class="card bg-base-200 border border-base-content/10 hover:shadow-lg transition"
+                 data-searchable="{{ community.name }} {{ community.description }} {{ community.creator.username }}">
                 <div class="card-body">
                     <h2 class="card-title">{{ community.name }}</h2>
                     <p>{{ community.description[:100] }}{% if community.description|length > 100 %}...{% endif %}</p>
@@ -43,6 +45,7 @@
                         <a href="/communities/{{ community.id }}" class="btn btn-sm btn-primary">View</a>
                     </div>
                 </div>
+            </div>
             </div>
             {% endfor %}
         </div>

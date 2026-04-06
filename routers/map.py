@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from haversine import haversine
 
 from models import Event
-from auth_utils import get_current_user
+from auth_utils import get_current_user, require_current_user
 from database import get_db
 
 router = APIRouter(tags=["map"])
@@ -16,7 +16,7 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/", response_class=HTMLResponse)
 async def map_page(
     request: Request,
-    user=Depends(get_current_user),
+    user=Depends(require_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Event.category).distinct())
@@ -37,11 +37,20 @@ async def get_map_pins(
     long: float = Query(-2.9916, ge=-180, le=180),
     radius_km: float = Query(50, gt=0),
     category: str | None = Query(None),
+    search: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     stmt = select(Event)
     if category:
         stmt = stmt.where(Event.category == category)
+    if search:
+        stmt = stmt.where(
+            or_(
+                Event.title.ilike(f"%{search}%"),
+                Event.location_name.ilike(f"%{search}%"),
+                Event.description.ilike(f"%{search}%"),
+            )
+        )
     result = await db.execute(stmt)
     all_events = result.scalars().all()
 
