@@ -6,12 +6,10 @@
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-3xl font-bold">Events</h1>
         {% if user %}
-            <a href="/events/create" class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
-                Create Event
-            </a>
-            <a href="/events/nearby" class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
-                View Nearby Events
-            </a>
+        <div class="flex gap-2">
+            <a href="/events/create" class="btn btn-sm btn-primary">Create Event</a>
+            <a href="/events/nearby" class="btn btn-sm btn-outline btn-primary">Nearby Events</a>
+        </div>
         {% endif %}
     </div>
 
@@ -21,7 +19,7 @@
             {% for event in events %}
 
                 <a href="/events/{{ event.id }}" class="block">
-                    <div class="card bg-base-100 shadow-md hover:shadow-lg transition cursor-pointer">
+                    <div class="card bg-base-200 border border-base-content/10 hover:shadow-lg transition cursor-pointer">
                         <div class="card-body">
 
                             <h2 class="card-title">{{ event.title }}</h2>
@@ -30,11 +28,11 @@
 
                             <p>{{ event.description }}</p>
 
-                            <p class="text-sm text-gray-500">
+                            <p class="text-sm text-base-content/60">
                                 {{ event.location_name }}
                             </p>
 
-                            <p class="text-sm text-gray-500">
+                            <p class="text-sm text-base-content/60">
                                 {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}
                             </p>
 

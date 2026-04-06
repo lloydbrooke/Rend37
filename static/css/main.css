@@ -1,3 +1,39 @@
 @import "tailwindcss";
 @source "../../templates";
 @plugin "daisyui";
+
+/* Custom dark theme — orange primary, deep slate backgrounds */
+/* Uses DaisyUI v5 variable names (--color-* prefix) */
+@layer base {
+  [data-theme="rend37"] {
+    color-scheme: dark;
+    --color-base-100: oklch(14.07% 0.025 275.76);
+    --color-base-200: oklch(17.69% 0.022 275.76);
+    --color-base-300: oklch(21.66% 0.019 264.36);
+    --color-base-content: oklch(89.18% 0.006 264.53);
+    --color-primary: oklch(55% 0.2 38);
+    --color-primary-content: oklch(100% 0 0);
+    --color-secondary: oklch(49.88% 0.195 275.75);
+    --color-secondary-content: oklch(100% 0 0);
+    --color-accent: oklch(72.3% 0.219 149.579);
+    --color-accent-content: oklch(100% 0 0);
+    --color-neutral: oklch(25.06% 0.019 264.36);
+    --color-neutral-content: oklch(89.18% 0.006 264.53);
+    --color-info: oklch(62.3% 0.214 259.815);
+    --color-info-content: oklch(100% 0 0);
+    --color-success: oklch(72.3% 0.219 149.579);
+    --color-success-content: oklch(100% 0 0);
+    --color-warning: oklch(76.9% 0.188 70.08);
+    --color-warning-content: oklch(0% 0 0);
+    --color-error: oklch(57.71% 0.215 27.325);
+    --color-error-content: oklch(100% 0 0);
+    --radius-selector: 0.5rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0.75rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 0;
+  }
+}

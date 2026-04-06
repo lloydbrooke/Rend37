@@ -3,7 +3,7 @@
 {% block content %}
 <style>
   select[name="community_id"] option {
-    background: #2a2a35;
+    background: oklch(var(--b2));
     color: inherit;
   }
 </style>
@@ -55,7 +55,7 @@
       <div class="form-control">
         <label class="label pb-1"><span class="label-text text-sm">Pin your location</span></label>
         <p class="text-xs text-base-content/40 mb-2">Click the map to drop a pin — coordinates will fill in automatically.</p>
-        <div id="map-picker" class="rounded-lg border border-gray-600" style="height: 300px; z-index: 0;"></div>
+        <div id="map-picker" class="rounded-lg border border-base-content/10" style="height: 300px; z-index: 0;"></div>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
@@ -83,7 +83,7 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-neutral w-full mt-4">{% if event %}Save changes{% else %}Create event{% endif %}</button>
+      <button type="submit" class="btn btn-primary w-full mt-4">{% if event %}Save changes{% else %}Create event{% endif %}</button>
 
     </form>
   </div>

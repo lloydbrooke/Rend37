@@ -3,14 +3,14 @@
     <!-- REGISTER BUTTON -->
     <div id="register-btn-{{ event.id }}">
         {% if error %}
-            <p class="text-red-400 text-sm mb-2">{{ error }}</p>
+            <p class="text-error text-sm mb-2">{{ error }}</p>
         {% endif %}
         {% if is_registered %}
             <button
                 hx-post="/events/{{ event.id }}/unregister"
                 hx-target="#register-btn-{{ event.id }}"
                 hx-swap="outerHTML"
-                class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+                class="btn btn-outline btn-primary">
                 Unregister
             </button>
         {% else %}
@@ -18,7 +18,7 @@
                 hx-post="/events/{{ event.id }}/register"
                 hx-target="#register-btn-{{ event.id }}"
                 hx-swap="outerHTML"
-                class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+                class="btn btn-outline btn-primary">
                 Register
             </button>
         {% endif %}

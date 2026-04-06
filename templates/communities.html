@@ -5,11 +5,11 @@
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Communities</h1>
         {% if user %}
-        <button class="btn btn-primary" onclick="document.getElementById('create_modal').showModal()">
+        <button class="btn btn-sm btn-primary" onclick="document.getElementById('create_modal').showModal()">
             Create Community
         </button>
         {% else %}
-        <a href="/auth/login" class="btn btn-primary">Login to Create</a>
+        <a href="/auth/login" class="btn btn-sm btn-primary">Login to Create</a>
         {% endif %}
     </div>
 
@@ -30,11 +30,11 @@
     {% if communities %}
         <div class="grid gap-4 md:grid-cols-2">
             {% for community in communities %}
-            <div class="card bg-base-100 shadow-md hover:shadow-lg transition">
+            <div class="card bg-base-200 border border-base-content/10 hover:shadow-lg transition">
                 <div class="card-body">
                     <h2 class="card-title">{{ community.name }}</h2>
                     <p>{{ community.description[:100] }}{% if community.description|length > 100 %}...{% endif %}</p>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-base-content/60">
                         <strong>Creator:</strong> {{ community.creator.username }}<br>
                         <strong>Members:</strong> {{ community.members|length }}<br>
                         <strong>Events:</strong> {{ community.events|length }}
