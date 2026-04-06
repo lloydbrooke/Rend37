@@ -18,7 +18,9 @@
 
             {% for event in events %}
 
-                <a href="/events/{{ event.id }}" class="block">
+                <div class="search-item">
+                <a href="/events/{{ event.id }}" class="block"
+                   data-searchable="{{ event.title }} {{ event.category }} {{ event.location_name }} {{ event.description }}">
                     <div class="card bg-base-200 border border-base-content/10 hover:shadow-lg transition cursor-pointer">
                         <div class="card-body">
 
@@ -39,6 +41,7 @@
                         </div>
                     </div>
                 </a>
+                </div>
 
             {% endfor %}
 
