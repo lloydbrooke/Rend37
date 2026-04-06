@@ -18,9 +18,7 @@ import auth_utils
 from auth_utils import require_current_user, get_current_user,LoginRequiredException
 import models
 
-
-from routers import auth, communities, discussions
-
+from routers import auth, communities, discussions, events
 
 from database import Base, engine, get_db
 
@@ -36,12 +34,15 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
+
 templates = Jinja2Templates(directory="templates")
 app.state.templates = templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # register routers
 app.include_router(auth.router, prefix='/auth', tags=['auth'])
+app.include_router(events.router, prefix="/events", tags=["events"])
 app.include_router(communities.router, prefix='/communities', tags=['communities'])
 app.include_router(discussions.router, prefix='/events', tags=['discussions'])
 
@@ -63,21 +64,6 @@ async def communities_page(request: Request,db: Annotated[AsyncSession, Depends(
     })
 
 
-@app.get("/events", response_class=HTMLResponse)
-async def events_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
-    username = auth_utils.get_current_user_from_cookie(request)
-    user = None
-    if username:
-        result = await db.execute(select(models.User).filter(models.User.username == username))
-        user = result.scalars().first()
-
-    result = await db.execute(select(models.Event))
-    events = result.scalars().all()
-    return templates.TemplateResponse("events.html", {
-        "request": request,
-        "user": user,
-        "events": events,
-    })
 
 @app.get("/events/{event_id}", response_class=HTMLResponse)
 async def event_detail_page(
@@ -110,6 +96,12 @@ async def map_page(request: Request, user=Depends(get_current_user)):
 
 @app.exception_handler(LoginRequiredException)
 async def login_required_handler(request: Request, exc: LoginRequiredException):
+    # For HTMX requests, use HX-Redirect so the browser does a full-page navigate
+    # instead of rendering the login page inside a partial div
+    if request.headers.get("hx-request"):
+        response = Response(status_code=200)
+        response.headers["HX-Redirect"] = exc.redirect_url
+        return response
     return RedirectResponse(url=exc.redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
 ''' error handling and feedback for user '''

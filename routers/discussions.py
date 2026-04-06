@@ -31,19 +31,21 @@ async def get_event_discussions(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found.")
 
-    # 2. Authorization: Only registered attendees
-    reg_stmt = select(models.Registration).where(
-        models.Registration.event_id == event_id,
-        models.Registration.user_id == current_user.id
-    )
-    result = await db.execute(reg_stmt)
-    if not result.scalars().first():
-        return HTMLResponse(
-            '<div style="text-align:center;padding:32px 16px;opacity:0.5;">'
-            '<p style="font-weight:600;margin-bottom:4px;">Join the conversation</p>'
-            '<p style="font-size:0.875rem;">Register for this event to view and participate in the discussion.</p>'
-            '</div>'
+    # 2. Authorization: registered attendees OR event organizer
+    is_organizer = (current_user.id == event.organizer_id)
+    if not is_organizer:
+        reg_stmt = select(models.Registration).where(
+            models.Registration.event_id == event_id,
+            models.Registration.user_id == current_user.id
         )
+        result = await db.execute(reg_stmt)
+        if not result.scalars().first():
+            return HTMLResponse(
+                '<div style="text-align:center;padding:32px 16px;opacity:0.5;">'
+                '<p style="font-weight:600;margin-bottom:4px;">Join the conversation</p>'
+                '<p style="font-size:0.875rem;">Register for this event to view and participate in the discussion.</p>'
+                '</div>'
+            )
     
     # 2. Fetch all messages with authors
     msg_stmt = select(models.Message).where(
@@ -86,13 +88,16 @@ async def post_message(
     parent_id: int | None = Form(None),
     depth: int = Form(0)
 ):
-    # Verify registration
-    reg_stmt = select(models.Registration).where(
-        models.Registration.event_id == event_id,
-        models.Registration.user_id == current_user.id
-    )
-    if not (await db.execute(reg_stmt)).scalars().first():
-        raise HTTPException(status_code=403, detail="Must be registered to post.")
+    # Verify registration or organizer
+    event = (await db.execute(select(models.Event).where(models.Event.id == event_id))).scalars().first()
+    is_organizer = event and (current_user.id == event.organizer_id)
+    if not is_organizer:
+        reg_stmt = select(models.Registration).where(
+            models.Registration.event_id == event_id,
+            models.Registration.user_id == current_user.id
+        )
+        if not (await db.execute(reg_stmt)).scalars().first():
+            raise HTTPException(status_code=403, detail="Must be registered to post.")
     
     new_message = models.Message(
         content=content, user_id=current_user.id, event_id=event_id, parent_id=parent_id

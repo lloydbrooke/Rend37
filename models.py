@@ -27,7 +27,7 @@ class Community(Base):
     __tablename__ = 'communities'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False) 
-    description: Mapped[str] = mapped_column(Text, nullable=False) 
+    description: Mapped[str] = mapped_column(Text, nullable=False)
     creator_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
     
     # Relationships

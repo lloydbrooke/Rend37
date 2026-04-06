@@ -1,30 +1,86 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto" style="display:flex; flex-direction:column; width:100%;">
-    <header class="card bg-base-200 shadow-sm">
-        <div class="card-body">
-            <div class="badge badge-secondary mb-2">{{ event.category }}</div>
-            <h1 class="text-4xl font-extrabold">{{ event.title }}</h1>
-            <p class="text-lg opacity-80 mt-2">{{ event.description }}</p>
-            <div class="flex flex-wrap gap-6 text-sm mt-6 border-t pt-4 border-base-300">
-                <span class="flex items-center gap-1">📍 {{ event.location_name }}</span>
-                <span class="flex items-center gap-1">📅 {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}</span>
-                <span class="flex items-center gap-1">👤 Organizer: {{ event.organizer.username }}</span>
-            </div>
-        </div>
-    </header>
 
-    <section style="margin-top:32px; width:100%;">
+<div class="max-w-2xl mx-auto">
+
+    <a href="/events" class="text-sm text-gray-500 hover:text-gray-300 mb-6 inline-block">&larr; Back to Events</a>
+
+    <div class="mb-4">
+        <div class="badge badge-outline text-gray-400 border-gray-600 mb-2">{{ event.category }}</div>
+        <h1 class="text-3xl font-bold">{{ event.title }}</h1>
+    </div>
+
+    <div class="text-sm text-gray-500 space-y-1 mb-4">
+        <p>📍 {{ event.location_name }}</p>
+        <p>🗓 {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}</p>
+        <p id="attendee-count">👥 {{ attendee_count }} / {{ event.capacity_limit }} spots taken</p>
+    </div>
+
+    <p class="mb-6">{{ event.description }}</p>
+
+    <!-- loading the map -->
+    <div class="mb-6">
+        <h2 class="text-lg font-semibold mb-2">Location</h2>
+        
+        <!-- Leaflet map pin preview -->
+        <div id="event-map" class="rounded-lg border border-gray-600" style="height: 300px; z-index: 0;"></div>
+        
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+            const map = L.map('event-map', { zoomControl: true, scrollWheelZoom: false })
+                .setView([{{ event.latitude }}, {{ event.longitude }}], 15);
+    
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+    
+            L.marker([{{ event.latitude }}, {{ event.longitude }}])
+                .addTo(map)
+                .bindPopup("<strong>{{ event.title }}</strong><br>{{ event.location_name }}")
+                .openPopup();
+        </script>
+    </div>
+
+    <div class="flex gap-2 mt-4">
+
+        {% include "Partials/register_button.html" %}
+
+        {% if user and user.id == event.organizer_id %}
+        <a href="/events/{{ event.id }}/attendees"
+            class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+            View Attendees
+        </a>
+        <a href="/events/{{ event.id }}/edit"
+            class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+            Edit Event
+        </a>
+        <button
+            hx-delete="/events/{{ event.id }}"
+            hx-target="body"
+            hx-swap="innerHTML"
+            class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+            Delete Event
+        </button>
+        {% endif %}
+
+    </div>
+
+      <section style="margin-top:32px; width:100%;">
         <h2 class="text-2xl font-bold" style="margin-bottom:16px;">Community Discussion</h2>
 
         <div hx-get="/events/{{ event.id }}/discussions"
-             hx-trigger="load"
+             hx-trigger="load, registration-changed from:body"
              style="width:100%;">
             <div style="display:flex; justify-content:center; padding:48px 0;">
                 <span class="loading loading-spinner loading-lg text-primary"></span>
             </div>
         </div>
     </section>
+  
 </div>
+
+
 {% endblock %}
+

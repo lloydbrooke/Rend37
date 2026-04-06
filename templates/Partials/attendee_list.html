@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+    <a href="/events/{{ event.id }}" class="text-sm text-gray-500 hover:text-gray-300 mb-6 inline-block">&larr; Back to Event</a>
+
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">Attendees</h1>
+        <p class="text-sm text-gray-500 mt-1">{{ event.title }} · {{ attendees|length }} / {{ event.capacity_limit }} spots taken</p>
+    </div>
+
+    {% if attendees %}
+        <div class="space-y-2">
+            {% for attendee in attendees %}
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-base-200 border border-gray-700 mb-2">
+            <img src="https://ui-avatars.com/api/?name={{ attendee.username }}&background=random&color=fff" alt="avatar"
+                class="w-8 h-8 rounded-full" />
+            <a href="/users/{{ attendee.id }}" class="text-sm hover:text-white transition px-4">
+                {{ attendee.username }}
+            </a>
+        </div>  
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="rounded-lg bg-base-200 border border-gray-700 p-6 text-center">
+            <p class="text-gray-400">No attendees yet.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -2,26 +2,54 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Events</h1>
+
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold">Events</h1>
+        {% if user %}
+            <a href="/events/create" class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+                Create Event
+            </a>
+            <a href="/events/nearby" class="btn btn-bg btn-outline border-gray-400 hover:bg-gray-700 hover:border-gray-400 hover:text-gray-200">
+                View Nearby Events
+            </a>
+        {% endif %}
+    </div>
 
     {% if events %}
         <div class="grid gap-4 md:grid-cols-2">
+
             {% for event in events %}
-            <div class="card bg-base-100 shadow-md">
-                <div class="card-body">
-                    <h2 class="card-title">{{ event.title }}</h2>
-                    <div class="badge badge-outline">{{ event.category }}</div>
-                    <p>{{ event.description }}</p>
-                    <p class="text-sm text-gray-500">{{ event.location_name }}</p>
-                    <p class="text-sm text-gray-500">{{ event.date_time.strftime('%B %d, %Y at %H:%M') }}</p>
-                </div>
-            </div>
+
+                <a href="/events/{{ event.id }}" class="block">
+                    <div class="card bg-base-100 shadow-md hover:shadow-lg transition cursor-pointer">
+                        <div class="card-body">
+
+                            <h2 class="card-title">{{ event.title }}</h2>
+
+                            <div class="badge badge-outline">{{ event.category }}</div>
+
+                            <p>{{ event.description }}</p>
+
+                            <p class="text-sm text-gray-500">
+                                {{ event.location_name }}
+                            </p>
+
+                            <p class="text-sm text-gray-500">
+                                {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}
+                            </p>
+
+                        </div>
+                    </div>
+                </a>
+
             {% endfor %}
+
         </div>
     {% else %}
         <div class="alert alert-info">
-            <span>No events yet. </span>
+            <span>No events yet.</span>
         </div>
     {% endif %}
 </div>
+
 {% endblock %}

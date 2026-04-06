@@ -27,11 +27,17 @@ async def test_discussions_require_login(client, seed_event):
 
 
 @pytest.mark.asyncio
-async def test_discussions_require_registration(auth_client, seed_event):
-    """A logged-in user who is NOT registered sees a 'register to join' message."""
-    resp = await auth_client.get(f"/events/{seed_event.id}/discussions", follow_redirects=False)
-    assert resp.status_code == 200
-    assert "Register" in resp.text or "register" in resp.text
+async def test_discussions_require_registration(seed_event, seed_users):
+    """A logged-in non-organizer who is NOT registered sees a 'register to join' message."""
+    from httpx import AsyncClient, ASGITransport
+    from main import app
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        # Log in as bob (not the organizer)
+        await ac.post("/auth/login", data={"username": "bob", "password": "password123"}, follow_redirects=False)
+        resp = await ac.get(f"/events/{seed_event.id}/discussions", follow_redirects=False)
+        assert resp.status_code == 200
+        assert "Register" in resp.text or "register" in resp.text
 
 
 # ── View discussions ─────────────────────────────────────────────────
@@ -97,12 +103,17 @@ async def test_post_reply(auth_client, seed_event, db, seed_users):
 
 
 @pytest.mark.asyncio
-async def test_post_message_requires_registration(auth_client, seed_event):
-    """Cannot post if not registered for the event."""
-    resp = await auth_client.post(f"/events/{seed_event.id}/discussions", data={
-        "content": "Should fail",
-    }, follow_redirects=False)
-    assert resp.status_code in (403, 302)
+async def test_post_message_requires_registration(seed_event, seed_users):
+    """A non-organizer who is NOT registered cannot post."""
+    from httpx import AsyncClient, ASGITransport
+    from main import app
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        await ac.post("/auth/login", data={"username": "bob", "password": "password123"}, follow_redirects=False)
+        resp = await ac.post(f"/events/{seed_event.id}/discussions", data={
+            "content": "Should fail",
+        }, follow_redirects=False)
+        assert resp.status_code in (403, 302)
 
 
 @pytest.mark.asyncio
