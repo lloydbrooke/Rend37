@@ -1,15 +1,170 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Map</h1>
+<style>
+    /* Remove padding from content area for full-bleed map */
+    .drawer-content > .p-4 { padding: 0 !important; }
 
-    <div class="alert alert-warning">
-        <span>Map feature is to be implemented.</span>
+    .map-filter {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 1000;
+        background: oklch(var(--color-base-200));
+        border-radius: 8px;
+        padding: 8px 12px;
+        border: 1px solid oklch(var(--color-base-content) / 0.1);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    .map-filter label {
+        font-size: 0.75rem;
+        opacity: 0.6;
+    }
+
+    /* User location pulse */
+    .user-marker {
+        width: 18px;
+        height: 18px;
+        background: #3b82f6;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(59,130,246,0.3), 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    /* Dark popups contrasting against light map */
+    .leaflet-popup-content-wrapper {
+        background: #1a1a2e !important;
+        color: #f0f0f0 !important;
+        border-radius: 10px !important;
+        border: none !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.35) !important;
+    }
+    .leaflet-popup-tip {
+        background: #1a1a2e !important;
+    }
+    .leaflet-popup-content {
+        margin: 12px 14px !important;
+        line-height: 1.5 !important;
+        font-size: 0.875rem !important;
+    }
+    .leaflet-popup-content a {
+        color: oklch(var(--color-primary)) !important;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .leaflet-popup-content a:hover {
+        text-decoration: underline;
+    }
+    .popup-category {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: oklch(var(--color-primary) / 0.15);
+        color: oklch(var(--color-primary));
+        margin: 4px 0;
+    }
+    .popup-meta {
+        font-size: 0.8rem;
+        opacity: 0.6;
+        margin: 2px 0;
+    }
+</style>
+
+<div style="position:relative; height:calc(100vh - 64px); width:100%;">
+
+    <!-- Floating filter -->
+    <div class="map-filter">
+        <label>Filter:</label>
+        <select id="category-filter" class="select select-xs select-bordered">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+        </select>
     </div>
 
-    <div class="mt-4 rounded-lg bg-base-200 flex items-center justify-center" style="height: 400px;">
-        <p class="text-base-content/40 text-lg">Map placeholder</p>
-    </div>
+    <div id="map" style="width:100%; height:100%;"></div>
 </div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    var defaultLat = 53.4084;
+    var defaultLng = -2.9916;
+
+    var map = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLng], 14);
+    var markers = L.layerGroup().addTo(map);
+    var userMarker = null;
+
+    // Custom icon for user location
+    var userIcon = L.divIcon({
+        className: 'user-marker',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+    });
+
+    // Standard OpenStreetMap tiles (matches event detail and form maps)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Load pins immediately at default center
+    loadPins();
+
+    // Try browser geolocation — only show user marker if we get a real position
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                var lat = pos.coords.latitude;
+                var lng = pos.coords.longitude;
+                map.setView([lat, lng], 14);
+                userMarker = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 })
+                    .bindPopup('<strong>You are here</strong>')
+                    .addTo(map);
+                loadPins();
+            }
+        );
+    }
+
+    function loadPins() {
+        var center = map.getCenter();
+        var category = document.getElementById('category-filter').value;
+        var url = '/map/pins?lat=' + center.lat.toFixed(4)
+                + '&long=' + center.lng.toFixed(4)
+                + '&radius_km=50';
+        if (category) url += '&category=' + encodeURIComponent(category);
+
+        fetch(url)
+            .then(function(r) { return r.json(); })
+            .then(function(events) {
+                markers.clearLayers();
+                events.forEach(function(e) {
+                    var popupHtml =
+                        '<strong>' + e.title + '</strong><br>' +
+                        '<span class="popup-category">' + e.category + '</span><br>' +
+                        '<div class="popup-meta">📍 ' + e.location_name + '</div>' +
+                        '<div class="popup-meta">🗓 ' + e.date_time + '</div>' +
+                        '<div class="popup-meta">📏 ' + e.distance_km + ' km away</div>' +
+                        '<a href="/events/' + e.id + '">View Event →</a>';
+
+                    L.marker([e.latitude, e.longitude])
+                        .bindPopup(popupHtml)
+                        .addTo(markers);
+                });
+            });
+    }
+
+    // Reload pins on pan/zoom
+    map.on('moveend', loadPins);
+
+    // Reload on category change
+    document.getElementById('category-filter').addEventListener('change', loadPins);
+</script>
 {% endblock %}

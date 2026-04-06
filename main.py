@@ -18,7 +18,7 @@ import auth_utils
 from auth_utils import require_current_user, get_current_user,LoginRequiredException
 import models
 
-from routers import auth, communities, discussions, events
+from routers import auth, communities, discussions, events, map as map_router
 
 from database import Base, engine, get_db
 
@@ -45,6 +45,7 @@ app.include_router(auth.router, prefix='/auth', tags=['auth'])
 app.include_router(events.router, prefix="/events", tags=["events"])
 app.include_router(communities.router, prefix='/communities', tags=['communities'])
 app.include_router(discussions.router, prefix='/events', tags=['discussions'])
+app.include_router(map_router.router, prefix='/map', tags=['map'])
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -62,37 +63,6 @@ async def communities_page(request: Request,db: Annotated[AsyncSession, Depends(
         "user": user,
         "communities": communities,
     })
-
-
-
-@app.get("/events/{event_id}", response_class=HTMLResponse)
-async def event_detail_page(
-    event_id: int, 
-    request: Request, 
-    db: Annotated[AsyncSession, Depends(get_db)]
-):
-    user = await auth_utils.get_current_user(request, db)
-    # Fetch event and its organizer details
-    result = await db.execute(
-        select(models.Event)
-        .options(selectinload(models.Event.organizer))
-        .where(models.Event.id == event_id)
-    )
-    event = result.scalars().first()
-    
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
-        
-    return templates.TemplateResponse("event_detail.html", {
-        "request": request,
-        "user": user,
-        "event": event
-    })
-
-@app.get("/map", response_class=HTMLResponse)
-async def map_page(request: Request, user=Depends(get_current_user)):
-    return templates.TemplateResponse("map.html", {"request": request, "user": user})
-
 
 @app.exception_handler(LoginRequiredException)
 async def login_required_handler(request: Request, exc: LoginRequiredException):
