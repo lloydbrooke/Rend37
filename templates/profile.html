@@ -2,63 +2,172 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl mt-4 font-bold mb-6">User data</h1>
-    <p class="text-5xl my-1.5">{{ user.username }}</p>
-    <p class=" my-1.5">{{ user.email }}</p>
-    <p class=" my-1.5">{{ user.id }}</p>
- 
-    <h2 class="text-3xl mt-4"> Created Communities </h2>
-    {% for community in user.owned_communities %}
-        <p>{{ community.name }}</p>
-    {% endfor %}
 
-    <h2 class="text-3xl mt-4"> Joined Communities </h2>
-    {% for membership in user.community_memberships %}
-        <p>{{ membership.community.name }}</p>
-    {% endfor %}
-
-    <h2 class="text-3xl mt-4"> Events </h2>
-    {% for event in user.created_events %}
-        <p>{{ event.title }}</p>
-    {% endfor %}
-    
-    <h2 class="text-3xl mt-4"> Registrations </h2>
-    {% for registration in user.registrations %}
-        <p>{{ registration.event_id }} - {{ registration.status }} - {{ registration.event.title }}</p>
-    {% endfor %}
-
-  <div class="w-full max-w-sm rounded-xl bg-white p-8 shadow-2xl">
-        <h2 class="mb-6 text-center text-2xl font-bold tracking-tight text-gray-900">Update your account</h2>
-
-        {% if error %}
-            <div class="mb-4 rounded-md bg-red-50 p-4 border-l-4 border-red-500" role="alert">
-                <p class="text-sm text-red-700 font-medium">
-                    <span class="font-bold">Error:</span> {{ error }}
-                </p>
+    {# ── Profile Header ── #}
+    <div class="flex items-center gap-4 mb-8 mt-4">
+        <div class="avatar placeholder">
+            <div class="bg-primary text-primary-content rounded-full w-16 h-16" style="display:flex;align-items:center;justify-content:center;">
+                <span class="text-2xl font-bold">{{ user.username[0]|upper }}</span>
             </div>
-        {% endif %}
-
-        <form action="{{ url_for('update_profile') }}" method="post" class="space-y-4">
-            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input type="text" name="username"
-                    class="input input-bordered w-full text-sm">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" name="email"
-                    class="input input-bordered w-full text-sm">
-            </div>
-            
-            <button type="submit" 
-                class="flex w-full justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all">
-                Update Account
-            </button>
-        </form>
-        
+        </div>
+        <div>
+            <h1 class="text-3xl font-bold">{{ user.username }}</h1>
+            <p class="text-base-content/60">{{ user.email }}</p>
+        </div>
     </div>
-        
+
+    {# ── Stats Row ── #}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="card bg-base-200 border border-base-content/10">
+            <div class="card-body p-4 text-center">
+                <p class="text-2xl font-bold text-primary">{{ user.owned_communities|length }}</p>
+                <p class="text-xs text-base-content/60">Communities Created</p>
+            </div>
+        </div>
+        <div class="card bg-base-200 border border-base-content/10">
+            <div class="card-body p-4 text-center">
+                <p class="text-2xl font-bold text-primary">{{ user.community_memberships|length }}</p>
+                <p class="text-xs text-base-content/60">Communities Joined</p>
+            </div>
+        </div>
+        <div class="card bg-base-200 border border-base-content/10">
+            <div class="card-body p-4 text-center">
+                <p class="text-2xl font-bold text-primary">{{ user.created_events|length }}</p>
+                <p class="text-xs text-base-content/60">Events Created</p>
+            </div>
+        </div>
+        <div class="card bg-base-200 border border-base-content/10">
+            <div class="card-body p-4 text-center">
+                <p class="text-2xl font-bold text-primary">{{ user.registrations|length }}</p>
+                <p class="text-xs text-base-content/60">Events Registered</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+
+        {# ── Left Column: Activity ── #}
+        <div class="space-y-6">
+
+            {# Created Communities #}
+            <div class="card bg-base-200 border border-base-content/10">
+                <div class="card-body">
+                    <h2 class="card-title text-sm uppercase tracking-wider text-base-content/50">Created Communities</h2>
+                    {% if user.owned_communities %}
+                    <ul class="space-y-2 mt-2">
+                        {% for community in user.owned_communities %}
+                        <li>
+                            <a href="/communities/{{ community.id }}" class="flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 transition">
+                                <span class="badge badge-primary badge-xs"></span>
+                                <span class="text-sm font-medium">{{ community.name }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-base-content/40 mt-2">No communities created yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Joined Communities #}
+            <div class="card bg-base-200 border border-base-content/10">
+                <div class="card-body">
+                    <h2 class="card-title text-sm uppercase tracking-wider text-base-content/50">Joined Communities</h2>
+                    {% if user.community_memberships %}
+                    <ul class="space-y-2 mt-2">
+                        {% for membership in user.community_memberships %}
+                        <li>
+                            <a href="/communities/{{ membership.community.id }}" class="flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 transition">
+                                <span class="badge badge-secondary badge-xs"></span>
+                                <span class="text-sm font-medium">{{ membership.community.name }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-base-content/40 mt-2">Not a member of any communities yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        {# ── Right Column: Events + Settings ── #}
+        <div class="space-y-6">
+
+            {# Created Events #}
+            <div class="card bg-base-200 border border-base-content/10">
+                <div class="card-body">
+                    <h2 class="card-title text-sm uppercase tracking-wider text-base-content/50">Your Events</h2>
+                    {% if user.created_events %}
+                    <ul class="space-y-2 mt-2">
+                        {% for event in user.created_events %}
+                        <li>
+                            <a href="/events/{{ event.id }}" class="flex items-center justify-between p-2 rounded-lg hover:bg-base-300 transition">
+                                <span class="text-sm font-medium">{{ event.title }}</span>
+                                <span class="badge badge-outline badge-sm">{{ event.category }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-base-content/40 mt-2">No events created yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Registrations — sorted nearest date first #}
+            <div class="card bg-base-200 border border-base-content/10">
+                <div class="card-body">
+                    <h2 class="card-title text-sm uppercase tracking-wider text-base-content/50">Registered Events</h2>
+                    {% if user.registrations %}
+                    <ul class="space-y-2 mt-2">
+                        {% for registration in user.registrations|sort(attribute='event.date_time') %}
+                        <li>
+                            <a href="/events/{{ registration.event_id }}" class="flex items-center justify-between p-2 rounded-lg hover:bg-base-300 transition">
+                                <span class="text-sm font-medium">{{ registration.event.title }}</span>
+                                <span class="text-xs text-base-content/40">{{ registration.event.date_time.strftime('%b %d, %Y at %H:%M') }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-base-content/40 mt-2">Not registered for any events yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Account Settings #}
+            <div class="card bg-base-200 border border-base-content/10">
+                <div class="card-body">
+                    <h2 class="card-title text-sm uppercase tracking-wider text-base-content/50">Account Settings</h2>
+
+                    {% if error %}
+                        <div class="alert alert-error mt-2" role="alert">
+                            <p class="text-sm font-medium">{{ error }}</p>
+                        </div>
+                    {% endif %}
+
+                    <form action="{{ url_for('update_profile') }}" method="post" class="space-y-3 mt-2">
+                        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+                        <div>
+                            <label class="block text-sm font-medium text-base-content/70 mb-1">Username</label>
+                            <input type="text" name="username" placeholder="{{ user.username }}"
+                                class="input input-bordered input-sm w-full text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-base-content/70 mb-1">Email</label>
+                            <input type="email" name="email" placeholder="{{ user.email }}"
+                                class="input input-bordered input-sm w-full text-sm">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-full">Update Account</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 {% endblock %}

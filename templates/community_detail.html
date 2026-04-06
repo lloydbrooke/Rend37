@@ -20,26 +20,22 @@
         <div class="flex justify-between items-start">
             <div>
                 <h1 class="text-4xl font-bold mb-2">{{ community.name }}</h1>
-                <p class="text-gray-600 mb-2">Created by <strong>{{ community.creator.username }}</strong></p>
+                <p class="text-base-content/60 mb-2">Created by <strong>{{ community.creator.username }}</strong></p>
             </div>
             <div class="flex gap-2">
                 {% if is_creator %}
-                <button class="btn btn-primary" onclick="document.getElementById('edit_modal').showModal()">
-                    Edit
-                </button>
+                <button class="btn btn-sm btn-primary" onclick="document.getElementById('edit_modal').showModal()">Edit</button>
                 <form method="POST" action="/communities/{{ community.id }}/delete" style="display: inline;">
-                    <button type="submit" class="btn btn-error" onclick="return confirm('Are you sure you want to delete this community?')">
-                        Delete
-                    </button>
+                    <button type="submit" class="btn btn-sm btn-error" onclick="return confirm('Are you sure you want to delete this community?')">Delete</button>
                 </form>
                 {% elif user %}
                     {% if is_member %}
                     <form method="POST" action="/communities/{{ community.id }}/leave" style="display: inline;">
-                        <button type="submit" class="btn btn-warning">Leave Community</button>
+                        <button type="submit" class="btn btn-sm btn-outline btn-warning">Leave</button>
                     </form>
                     {% else %}
                     <form method="POST" action="/communities/{{ community.id }}/join" style="display: inline;">
-                        <button type="submit" class="btn btn-primary">Join Community</button>
+                        <button type="submit" class="btn btn-sm btn-primary">Join Community</button>
                     </form>
                     {% endif %}
                 {% endif %}
@@ -47,38 +43,27 @@
         </div>
     </div>
 
-    <!-- Community Description -->
-    <div class="card bg-base-100 shadow-md mb-6">
+    <!-- Community Description + Stats -->
+    <div class="card bg-base-200 border border-base-content/10 mb-6">
         <div class="card-body">
             <h2 class="card-title">About</h2>
             <p>{{ community.description }}</p>
-        </div>
-    </div>
-
-    <!-- Members Section -->
-    <div class="card bg-base-100 shadow-md mb-6">
-        <div class="card-body">
-            <h2 class="card-title mb-4">Members ({{ community.members|length }})</h2>
-            {% if community.members %}
-            <div class="grid gap-2 md:grid-cols-2">
-                {% for member in community.members %}
-                <div class="badge badge-lg">
-                    <img src="{{ member.user.image_url or 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + member.user.username }}" 
-                         alt="{{ member.user.username }}" class="w-6 h-6 rounded-full mr-2">
-                    {{ member.user.username }}
-                </div>
-                {% endfor %}
+            <div class="flex gap-4 mt-3 text-sm text-base-content/60">
+                <span>{{ community.members|length }} member{{ 's' if community.members|length != 1 else '' }}</span>
+                <span>{{ community.events|length }} event{{ 's' if community.events|length != 1 else '' }}</span>
             </div>
-            {% else %}
-            <p class="text-gray-500">No members yet</p>
-            {% endif %}
         </div>
     </div>
 
     <!-- Events Section -->
-    <div class="card bg-base-100 shadow-md">
+    <div class="card bg-base-200 border border-base-content/10">
         <div class="card-body">
-            <h2 class="card-title mb-4">Events ({{ community.events|length }})</h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title">Events ({{ community.events|length }})</h2>
+                {% if user and (is_member or is_creator) %}
+                <a href="/events/create" class="btn btn-sm btn-primary">Create Event</a>
+                {% endif %}
+            </div>
             {% if community.events %}
             <div class="space-y-3">
                 {% for event in community.events %}
@@ -86,7 +71,7 @@
                     <div class="card-body">
                         <h3 class="card-title text-lg">{{ event.title }}</h3>
                         <p>{{ event.description }}</p>
-                        <p class="text-sm text-gray-600">
+                        <p class="text-sm text-base-content/60">
                             <strong>Date:</strong> {{ event.date_time.strftime('%B %d, %Y %I:%M %p') }}<br>
                             <strong>Location:</strong> {{ event.location_name }}<br>
                             <strong>Category:</strong> {{ event.category }}
@@ -94,13 +79,13 @@
                         {% if event.capacity_limit %}
                         <p class="text-sm"><strong>Capacity:</strong> {{ event.attendees|length }}/{{ event.capacity_limit }}</p>
                         {% endif %}
-                        <a href="/events/{{ event.id }}" class="btn btn-sm btn-outline">View Details</a>
+                        <a href="/events/{{ event.id }}" class="btn btn-sm btn-outline btn-primary">View Details</a>
                     </div>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <p class="text-gray-500">No events yet</p>
+            <p class="text-base-content/60">No events yet</p>
             {% endif %}
         </div>
     </div>

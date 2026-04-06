@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-  <article class="content-section py-3 px-4 mb-4">
-    <h1>
-      <a class="article-title" href="#">Oops... {{ status_code }} Error</a>
-    </h1>
-    <p class="article-content">{{ message }}</p>
-  </article>
+<div class="grid min-h-[60vh] place-items-center px-4">
+    <div class="text-center">
+        <h1 class="text-6xl font-extrabold text-primary mb-4">{{ status_code }}</h1>
+        <p class="text-xl text-base-content/80 mb-6">{{ message }}</p>
+        <a href="/" class="btn btn-outline btn-primary">Go Home</a>
+    </div>
+</div>
 {% endblock content %}
