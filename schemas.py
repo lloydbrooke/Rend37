@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 from fastapi import Form, Depends
 from datetime import datetime
 
+
 def as_form(cls: Type[BaseModel]):
     new_params = [
         inspect.Parameter(
@@ -22,18 +23,21 @@ def as_form(cls: Type[BaseModel]):
     setattr(cls, "as_form", _as_form)
     return cls
 
+
 @as_form
 class UserRegisterForm(BaseModel):
     username: str
     email: EmailStr  # Automatically validates email format!
     password: str
 
+
 @as_form
 class LoginForm(BaseModel):
     username: str
     password: str
 
-# add a field for profile picture later 
+
+# add a field for profile picture later
 @as_form
 class UpdateProfileForm(BaseModel):
     username: str | None = None
@@ -52,13 +56,14 @@ class EventCreateForm(BaseModel):
     location_name: str
     community_id: int
 
+
 @as_form
 class CommunityCreateForm(BaseModel):
     name: str
     description: str
 
+
 @as_form
 class CommunityUpdateForm(BaseModel):
     name: str | None = None
     description: str | None = None
-

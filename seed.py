@@ -155,28 +155,60 @@ async def seed():
 
         # ── Community Memberships ───────────────────────────────────
         memberships = [
-            models.CommunityMember(user_id=users[0].id, community_id=communities[1].id),  # alice joins Running Club
-            models.CommunityMember(user_id=users[0].id, community_id=communities[2].id),  # alice joins Board Games
-            models.CommunityMember(user_id=users[1].id, community_id=communities[0].id),  # bob joins Tech Meetups
-            models.CommunityMember(user_id=users[1].id, community_id=communities[3].id),  # bob joins Photography
-            models.CommunityMember(user_id=users[2].id, community_id=communities[0].id),  # charlie joins Tech Meetups
-            models.CommunityMember(user_id=users[2].id, community_id=communities[1].id),  # charlie joins Running Club
-            models.CommunityMember(user_id=users[3].id, community_id=communities[0].id),  # diana joins Tech Meetups
-            models.CommunityMember(user_id=users[3].id, community_id=communities[2].id),  # diana joins Board Games
+            models.CommunityMember(
+                user_id=users[0].id, community_id=communities[1].id
+            ),  # alice joins Running Club
+            models.CommunityMember(
+                user_id=users[0].id, community_id=communities[2].id
+            ),  # alice joins Board Games
+            models.CommunityMember(
+                user_id=users[1].id, community_id=communities[0].id
+            ),  # bob joins Tech Meetups
+            models.CommunityMember(
+                user_id=users[1].id, community_id=communities[3].id
+            ),  # bob joins Photography
+            models.CommunityMember(
+                user_id=users[2].id, community_id=communities[0].id
+            ),  # charlie joins Tech Meetups
+            models.CommunityMember(
+                user_id=users[2].id, community_id=communities[1].id
+            ),  # charlie joins Running Club
+            models.CommunityMember(
+                user_id=users[3].id, community_id=communities[0].id
+            ),  # diana joins Tech Meetups
+            models.CommunityMember(
+                user_id=users[3].id, community_id=communities[2].id
+            ),  # diana joins Board Games
         ]
         session.add_all(memberships)
         await session.flush()
 
         # ── Registrations ────────────────────────────────────────────
         registrations = [
-            models.Registration(user_id=users[0].id, event_id=events[2].id, status="registered"),
-            models.Registration(user_id=users[0].id, event_id=events[4].id, status="registered"),
-            models.Registration(user_id=users[1].id, event_id=events[0].id, status="registered"),
-            models.Registration(user_id=users[1].id, event_id=events[5].id, status="registered"),
-            models.Registration(user_id=users[2].id, event_id=events[1].id, status="registered"),
-            models.Registration(user_id=users[2].id, event_id=events[3].id, status="registered"),
-            models.Registration(user_id=users[3].id, event_id=events[0].id, status="registered"),
-            models.Registration(user_id=users[3].id, event_id=events[4].id, status="registered"),
+            models.Registration(
+                user_id=users[0].id, event_id=events[2].id, status="registered"
+            ),
+            models.Registration(
+                user_id=users[0].id, event_id=events[4].id, status="registered"
+            ),
+            models.Registration(
+                user_id=users[1].id, event_id=events[0].id, status="registered"
+            ),
+            models.Registration(
+                user_id=users[1].id, event_id=events[5].id, status="registered"
+            ),
+            models.Registration(
+                user_id=users[2].id, event_id=events[1].id, status="registered"
+            ),
+            models.Registration(
+                user_id=users[2].id, event_id=events[3].id, status="registered"
+            ),
+            models.Registration(
+                user_id=users[3].id, event_id=events[0].id, status="registered"
+            ),
+            models.Registration(
+                user_id=users[3].id, event_id=events[4].id, status="registered"
+            ),
         ]
         session.add_all(registrations)
         await session.flush()
@@ -215,7 +247,9 @@ async def seed():
 
         await session.commit()
         print("Database seeded successfully.")
-        print("  4 users  |  4 communities  |  8 memberships  |  6 events  |  8 registrations  |  4 messages")
+        print(
+            "  4 users  |  4 communities  |  8 memberships  |  6 events  |  8 registrations  |  4 messages"
+        )
         print("  All users have password: password123")
 
     await engine.dispose()

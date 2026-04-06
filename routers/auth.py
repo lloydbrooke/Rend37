@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, Form, Request, Response, status,HTTPException
+from fastapi import APIRouter, Depends, Form, Request, Response, status, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
@@ -14,18 +14,28 @@ from schemas import LoginForm, UserRegisterForm, UpdateProfileForm
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
+
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request, error: str = None, next: str = None):
-    return templates.TemplateResponse("register.html", {"request": request, "error": error, "next": next})
+    return templates.TemplateResponse(
+        "register.html", {"request": request, "error": error, "next": next}
+    )
+
 
 @router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request, msg: str = None, error: str = None, next: str = None):
-    return templates.TemplateResponse("login.html", {
-        "request": request,
-        "success_msg": msg,
-        "error": error,
-        "next": next,
-    })
+async def login_page(
+    request: Request, msg: str = None, error: str = None, next: str = None
+):
+    return templates.TemplateResponse(
+        "login.html",
+        {
+            "request": request,
+            "success_msg": msg,
+            "error": error,
+            "next": next,
+        },
+    )
+
 
 @router.post("/register")
 async def register_user(
@@ -38,28 +48,34 @@ async def register_user(
     user_stmt = select(models.User).filter(models.User.username == form_data.username)
     user_result = await db.execute(user_stmt)
     if user_result.scalars().first():
-        return templates.TemplateResponse("register.html", {
-            "request": request,
-            "error": f"The username '{form_data.username}' is already taken.",
-            "next": next,
-        })
+        return templates.TemplateResponse(
+            "register.html",
+            {
+                "request": request,
+                "error": f"The username '{form_data.username}' is already taken.",
+                "next": next,
+            },
+        )
 
     # check if email already exists
     email_stmt = select(models.User).filter(models.User.email == form_data.email)
     email_result = await db.execute(email_stmt)
     if email_result.scalars().first():
-        return templates.TemplateResponse("register.html", {
-            "request": request,
-            "error": f"the email '{form_data.email}' is already associated with an account.",
-            "next": next,
-        })
+        return templates.TemplateResponse(
+            "register.html",
+            {
+                "request": request,
+                "error": f"the email '{form_data.email}' is already associated with an account.",
+                "next": next,
+            },
+        )
 
     # create user if both are clear
     try:
         new_user = models.User(
             username=form_data.username,
             email=form_data.email,
-            hashed_password=auth_utils.hash_password(form_data.password)
+            hashed_password=auth_utils.hash_password(form_data.password),
         )
         db.add(new_user)
         await db.commit()
@@ -69,11 +85,15 @@ async def register_user(
         return RedirectResponse(url=login_url, status_code=status.HTTP_302_FOUND)
     except Exception as e:
         await db.rollback()
-        return templates.TemplateResponse("register.html", {
-            "request": request,
-            "error": "An unexpected error occurred. Please try again.",
-            "next": next,
-        })
+        return templates.TemplateResponse(
+            "register.html",
+            {
+                "request": request,
+                "error": "An unexpected error occurred. Please try again.",
+                "next": next,
+            },
+        )
+
 
 @router.post("/login")
 async def login_user(
@@ -84,18 +104,28 @@ async def login_user(
     next: Annotated[str | None, Form()] = None,
 ):
     # Use Async-style query (select)
-    result = await db.execute(select(models.User).filter(models.User.username == form_data.username))
+    result = await db.execute(
+        select(models.User).filter(models.User.username == form_data.username)
+    )
     user = result.scalars().first()
 
-    if not user or not auth_utils.verify_password(form_data.password, user.hashed_password):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid credentials", "next": next})
+    if not user or not auth_utils.verify_password(
+        form_data.password, user.hashed_password
+    ):
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "Invalid credentials", "next": next},
+        )
 
     token = auth_utils.create_access_token(data={"sub": user.username})
 
     redirect_url = next if next and next.startswith("/") else "/communities"
     redirect = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
-    redirect.set_cookie(key="access_token", value=f"Bearer {token}", httponly=True, samesite="lax")
+    redirect.set_cookie(
+        key="access_token", value=f"Bearer {token}", httponly=True, samesite="lax"
+    )
     return redirect
+
 
 @router.get("/logout")
 async def logout():
@@ -104,112 +134,143 @@ async def logout():
     return response
 
 
-''' user profile routes '''
+""" user profile routes """
+
+
 @router.post("/profile")
 async def update_profile(
     request: Request,
     form_data: Annotated[UpdateProfileForm, Depends(UpdateProfileForm.as_form)],
     db: Annotated[AsyncSession, Depends(get_db)] = None,
-    user=Depends(auth_utils.require_current_user)
+    user=Depends(auth_utils.require_current_user),
 ):
     result = await db.execute(
-    select(models.User)
-    .options(
-        selectinload(models.User.owned_communities),
-        selectinload(models.User.created_events),
-        selectinload(models.User.community_memberships).selectinload(models.CommunityMember.community),
-        selectinload(models.User.registrations).selectinload(models.Registration.event)
+        select(models.User)
+        .options(
+            selectinload(models.User.owned_communities),
+            selectinload(models.User.created_events),
+            selectinload(models.User.community_memberships).selectinload(
+                models.CommunityMember.community
+            ),
+            selectinload(models.User.registrations).selectinload(
+                models.Registration.event
+            ),
+        )
+        .filter(models.User.username == user.username)
     )
-    .filter(models.User.username == user.username)
-    )   
     user_data = result.scalars().first()
 
-    # check for fields with data and update the user based on those 
+    # check for fields with data and update the user based on those
     # check if username already exists
     if form_data.username:
-        user_stmt = select(models.User).filter(models.User.username == form_data.username)
+        user_stmt = select(models.User).filter(
+            models.User.username == form_data.username
+        )
         user_result = await db.execute(user_stmt)
         if user_result.scalars().first():
-            return templates.TemplateResponse("profile.html", {
-                "request": request,
-                "error": f"The username '{form_data.username}' is already taken.",
-                "user" : user_data
-            })
-        
-        user_data.username=form_data.username
+            return templates.TemplateResponse(
+                "profile.html",
+                {
+                    "request": request,
+                    "error": f"The username '{form_data.username}' is already taken.",
+                    "user": user_data,
+                },
+            )
+
+        user_data.username = form_data.username
 
     # check if email already exists
     if form_data.email:
         email_stmt = select(models.User).filter(models.User.email == form_data.email)
         email_result = await db.execute(email_stmt)
         if email_result.scalars().first():
-            return templates.TemplateResponse("profile.html", {
-                "request": request,
-                "error": f"the email '{form_data.email}' is already associated with an account.",
-                "user" : user_data
-            })
-        
-        user_data.email=form_data.email
-# update the information
+            return templates.TemplateResponse(
+                "profile.html",
+                {
+                    "request": request,
+                    "error": f"the email '{form_data.email}' is already associated with an account.",
+                    "user": user_data,
+                },
+            )
+
+        user_data.email = form_data.email
+    # update the information
 
     await db.commit()
-# return the profile page with new updated information
-    response = templates.TemplateResponse("profile.html", {"request": request, "user": user_data})
+    # return the profile page with new updated information
+    response = templates.TemplateResponse(
+        "profile.html", {"request": request, "user": user_data}
+    )
     # reissue the JWT cookie so it reflects the (possibly changed) username
     token = auth_utils.create_access_token(data={"sub": user_data.username})
-    response.set_cookie(key="access_token", value=f"Bearer {token}", httponly=True, samesite="lax")
+    response.set_cookie(
+        key="access_token", value=f"Bearer {token}", httponly=True, samesite="lax"
+    )
     return response
 
-''' user profile routes '''
+
+""" user profile routes """
+
+
 @router.get("/profile")
 async def get_profile(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
-    user=Depends(auth_utils.require_current_user)
+    user=Depends(auth_utils.require_current_user),
 ):
     result = await db.execute(
-    select(models.User)
-    .options(
-        selectinload(models.User.owned_communities),
-        selectinload(models.User.created_events),
-        selectinload(models.User.community_memberships).selectinload(models.CommunityMember.community),
-        selectinload(models.User.registrations).selectinload(models.Registration.event)
+        select(models.User)
+        .options(
+            selectinload(models.User.owned_communities),
+            selectinload(models.User.created_events),
+            selectinload(models.User.community_memberships).selectinload(
+                models.CommunityMember.community
+            ),
+            selectinload(models.User.registrations).selectinload(
+                models.Registration.event
+            ),
+        )
+        .filter(models.User.username == user.username)
     )
-    .filter(models.User.username == user.username)
-    )   
     user_data = result.scalars().first()
 
-    return templates.TemplateResponse("profile.html", {"request": request, "user": user_data})
+    return templates.TemplateResponse(
+        "profile.html", {"request": request, "user": user_data}
+    )
+
 
 @router.get("/profile/{user_id}")
 async def get_user_profile(
     user_id: int,
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
-    user=Depends(auth_utils.get_current_user)
+    user=Depends(auth_utils.get_current_user),
 ):
     result = await db.execute(
-    select(models.User)
-    .options(
-        selectinload(models.User.community_memberships).selectinload(models.CommunityMember.community),
+        select(models.User)
+        .options(
+            selectinload(models.User.community_memberships).selectinload(
+                models.CommunityMember.community
+            ),
+        )
+        .filter(models.User.id == user_id)
     )
-    .filter(models.User.id == user_id)
-    )
-    db_result = result.scalars().first()  
+    db_result = result.scalars().first()
 
     if not db_result:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    # if its the current user redirect them to the proper auth profile route where they can edit their details 
+
+    # if its the current user redirect them to the proper auth profile route where they can edit their details
     if user.username == db_result.username:
-        return RedirectResponse("/auth/profile") 
+        return RedirectResponse("/auth/profile")
 
     # build context dict containing public facing data
     user_data = {
         "username": db_result.username,
         "communities": db_result.community_memberships,
-        "image_url" : db_result.image_url 
+        "image_url": db_result.image_url,
     }
 
-    return templates.TemplateResponse("user_profile.html", {"request": request, "user": user_data})
-
+    return templates.TemplateResponse(
+        "user_profile.html", {"request": request, "user": user_data}
+    )

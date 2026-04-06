@@ -31,28 +31,26 @@ async def create_community(
         if existing.scalars().first():
             return RedirectResponse(
                 url="/communities?error=Community+name+already+exists",
-                status_code=status.HTTP_302_FOUND
+                status_code=status.HTTP_302_FOUND,
             )
 
         # Create new community
         new_community = models.Community(
-            name=form_data.name,
-            description=form_data.description,
-            creator_id=user.id
+            name=form_data.name, description=form_data.description, creator_id=user.id
         )
         db.add(new_community)
         await db.commit()
         await db.refresh(new_community)
-        
+
         return RedirectResponse(
             url=f"/communities/{new_community.id}?msg=Community+created+successfully",
-            status_code=status.HTTP_302_FOUND
+            status_code=status.HTTP_302_FOUND,
         )
     except Exception as e:
         await db.rollback()
         return RedirectResponse(
             url="/communities?error=Failed+to+create+community",
-            status_code=status.HTTP_302_FOUND
+            status_code=status.HTTP_302_FOUND,
         )
 
 
@@ -68,8 +66,12 @@ async def get_community(
         select(models.Community)
         .options(
             selectinload(models.Community.creator),
-            selectinload(models.Community.events).selectinload(models.Event.attendees).selectinload(models.Registration.user),
-            selectinload(models.Community.members).selectinload(models.CommunityMember.user),
+            selectinload(models.Community.events)
+            .selectinload(models.Event.attendees)
+            .selectinload(models.Registration.user),
+            selectinload(models.Community.members).selectinload(
+                models.CommunityMember.user
+            ),
         )
         .filter(models.Community.id == community_id)
     )
@@ -84,20 +86,23 @@ async def get_community(
         member_result = await db.execute(
             select(models.CommunityMember).filter(
                 models.CommunityMember.user_id == current_user.id,
-                models.CommunityMember.community_id == community_id
+                models.CommunityMember.community_id == community_id,
             )
         )
         is_member = member_result.scalars().first() is not None
 
     is_creator = current_user and current_user.id == community.creator_id
 
-    return templates.TemplateResponse("community_detail.html", {
-        "request": request,
-        "community": community,
-        "user": current_user,
-        "is_member": is_member,
-        "is_creator": is_creator,
-    })
+    return templates.TemplateResponse(
+        "community_detail.html",
+        {
+            "request": request,
+            "community": community,
+            "user": current_user,
+            "is_member": is_member,
+            "is_creator": is_creator,
+        },
+    )
 
 
 @router.post("/{community_id}")
@@ -119,7 +124,8 @@ async def update_community(
 
     if community.creator_id != user.id:
         raise HTTPException(
-            status_code=403, detail="Only the community creator can update this community"
+            status_code=403,
+            detail="Only the community creator can update this community",
         )
 
     try:
@@ -128,13 +134,13 @@ async def update_community(
             existing = await db.execute(
                 select(models.Community).filter(
                     models.Community.name == form_data.name,
-                    models.Community.id != community_id
+                    models.Community.id != community_id,
                 )
             )
             if existing.scalars().first():
                 return RedirectResponse(
                     url=f"/communities/{community_id}?error=Community+name+already+exists",
-                    status_code=status.HTTP_302_FOUND
+                    status_code=status.HTTP_302_FOUND,
                 )
             community.name = form_data.name
 
@@ -144,13 +150,13 @@ async def update_community(
         await db.commit()
         return RedirectResponse(
             url=f"/communities/{community_id}?msg=Community+updated+successfully",
-            status_code=status.HTTP_302_FOUND
+            status_code=status.HTTP_302_FOUND,
         )
     except Exception as e:
         await db.rollback()
         return RedirectResponse(
             url=f"/communities/{community_id}?error=Failed+to+update+community",
-            status_code=status.HTTP_302_FOUND
+            status_code=status.HTTP_302_FOUND,
         )
 
 
@@ -171,7 +177,8 @@ async def delete_community(
 
     if community.creator_id != user.id:
         raise HTTPException(
-            status_code=403, detail="Only the community creator can delete this community"
+            status_code=403,
+            detail="Only the community creator can delete this community",
         )
 
     try:
@@ -179,7 +186,7 @@ async def delete_community(
         await db.commit()
         return RedirectResponse(
             url="/communities?msg=Community+deleted+successfully",
-            status_code=status.HTTP_302_FOUND
+            status_code=status.HTTP_302_FOUND,
         )
     except Exception as e:
         await db.rollback()
@@ -205,25 +212,24 @@ async def join_community(
     existing_member = await db.execute(
         select(models.CommunityMember).filter(
             models.CommunityMember.user_id == user.id,
-            models.CommunityMember.community_id == community_id
+            models.CommunityMember.community_id == community_id,
         )
     )
     if existing_member.scalars().first():
         return RedirectResponse(
             url=f"/communities/{community_id}?msg=Already+a+member",
-            status_code=status.HTTP_302_FOUND
+            status_code=status.HTTP_302_FOUND,
         )
 
     try:
         new_membership = models.CommunityMember(
-            user_id=user.id,
-            community_id=community_id
+            user_id=user.id, community_id=community_id
         )
         db.add(new_membership)
         await db.commit()
         return RedirectResponse(
             url=f"/communities/{community_id}?msg=Joined+community+successfully",
-            status_code=status.HTTP_302_FOUND
+            status_code=status.HTTP_302_FOUND,
         )
     except Exception as e:
         await db.rollback()
@@ -240,7 +246,7 @@ async def leave_community(
     result = await db.execute(
         select(models.CommunityMember).filter(
             models.CommunityMember.user_id == user.id,
-            models.CommunityMember.community_id == community_id
+            models.CommunityMember.community_id == community_id,
         )
     )
     membership = result.scalars().first()
@@ -253,7 +259,7 @@ async def leave_community(
         await db.commit()
         return RedirectResponse(
             url=f"/communities/{community_id}?msg=Left+community+successfully",
-            status_code=status.HTTP_302_FOUND
+            status_code=status.HTTP_302_FOUND,
         )
     except Exception as e:
         await db.rollback()

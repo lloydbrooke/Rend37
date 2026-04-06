@@ -21,8 +21,12 @@ import auth_utils
 
 # ── In-memory test database ─────────────────────────────────────────
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-test_engine = create_async_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
-TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+test_engine = create_async_engine(
+    TEST_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+TestSessionLocal = async_sessionmaker(
+    test_engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 async def override_get_db():
@@ -34,6 +38,7 @@ app.dependency_overrides[get_db] = override_get_db
 
 
 # ── Fixtures ─────────────────────────────────────────────────────────
+
 
 @pytest.fixture(autouse=True)
 async def setup_database():
@@ -64,8 +69,16 @@ async def client():
 async def seed_users(db: AsyncSession):
     """Insert test users and return them. All have password 'password123'."""
     users = [
-        models.User(username="alice", email="alice@test.com", hashed_password=auth_utils.hash_password("password123")),
-        models.User(username="bob", email="bob@test.com", hashed_password=auth_utils.hash_password("password123")),
+        models.User(
+            username="alice",
+            email="alice@test.com",
+            hashed_password=auth_utils.hash_password("password123"),
+        ),
+        models.User(
+            username="bob",
+            email="bob@test.com",
+            hashed_password=auth_utils.hash_password("password123"),
+        ),
     ]
     db.add_all(users)
     await db.commit()
@@ -77,7 +90,11 @@ async def seed_users(db: AsyncSession):
 @pytest.fixture
 async def seed_community(db: AsyncSession, seed_users):
     """Insert a test community owned by alice."""
-    community = models.Community(name="Test Community", description="A test community.", creator_id=seed_users[0].id)
+    community = models.Community(
+        name="Test Community",
+        description="A test community.",
+        creator_id=seed_users[0].id,
+    )
     db.add(community)
     await db.commit()
     await db.refresh(community)
@@ -88,6 +105,7 @@ async def seed_community(db: AsyncSession, seed_users):
 async def seed_event(db: AsyncSession, seed_users, seed_community):
     """Insert a test event organized by alice in the test community."""
     from datetime import datetime, timedelta, UTC
+
     event = models.Event(
         title="Test Event",
         description="A test event.",
@@ -112,7 +130,11 @@ async def auth_client(seed_users):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         # Log in via the actual login endpoint to get a real cookie
-        await ac.post("/auth/login", data={"username": "alice", "password": "password123"}, follow_redirects=False)
+        await ac.post(
+            "/auth/login",
+            data={"username": "alice", "password": "password123"},
+            follow_redirects=False,
+        )
         # The cookie is set on the redirect response and stored in ac.cookies
         yield ac
 
