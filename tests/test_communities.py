@@ -14,6 +14,7 @@ from tests.conftest import make_auth_cookie
 
 # ── List communities ─────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_list_communities_page(client, seed_community):
     resp = await client.get("/communities")
@@ -28,6 +29,7 @@ async def test_list_communities_empty(client):
 
 
 # ── Create community ────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_create_community_form_requires_login(client):
@@ -44,10 +46,14 @@ async def test_create_community_form_renders(auth_client):
 
 @pytest.mark.asyncio
 async def test_create_community_success(auth_client, db):
-    resp = await auth_client.post("/communities/create", data={
-        "name": "New Community",
-        "description": "A brand new community.",
-    }, follow_redirects=False)
+    resp = await auth_client.post(
+        "/communities/create",
+        data={
+            "name": "New Community",
+            "description": "A brand new community.",
+        },
+        follow_redirects=False,
+    )
     # Should redirect to the new community page
     assert resp.status_code in (302, 303)
 
@@ -57,23 +63,29 @@ async def test_create_community_success(auth_client, db):
 
 @pytest.mark.asyncio
 async def test_create_community_duplicate_name(auth_client, seed_community):
-    resp = await auth_client.post("/communities/create", data={
-        "name": "Test Community",  # already exists from seed_community
-        "description": "duplicate",
-    })
+    resp = await auth_client.post(
+        "/communities/create",
+        data={
+            "name": "Test Community",  # already exists from seed_community
+            "description": "duplicate",
+        },
+    )
     # Should show error, not crash
     assert resp.status_code in (200, 409, 422)
 
 
 @pytest.mark.asyncio
 async def test_create_community_requires_login(client):
-    resp = await client.post("/communities/create", data={
-        "name": "No Auth", "description": "should fail"
-    }, follow_redirects=False)
+    resp = await client.post(
+        "/communities/create",
+        data={"name": "No Auth", "description": "should fail"},
+        follow_redirects=False,
+    )
     assert resp.status_code in (302, 401, 403)
 
 
 # ── View single community ───────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_view_community(client, seed_community):
@@ -90,26 +102,35 @@ async def test_view_community_not_found(client):
 
 # ── Edit community ──────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_edit_community_requires_creator(auth_client, db, seed_users):
     """Only the creator should be able to access the edit form."""
     # Create a community owned by bob (seed_users[1])
-    community = models.Community(name="Bob's Community", description="owned by bob", creator_id=seed_users[1].id)
+    community = models.Community(
+        name="Bob's Community", description="owned by bob", creator_id=seed_users[1].id
+    )
     db.add(community)
     await db.commit()
     await db.refresh(community)
 
     # auth_client is logged in as alice — should be denied
-    resp = await auth_client.get(f"/communities/{community.id}/edit", follow_redirects=False)
+    resp = await auth_client.get(
+        f"/communities/{community.id}/edit", follow_redirects=False
+    )
     assert resp.status_code in (403, 302)
 
 
 @pytest.mark.asyncio
 async def test_edit_community_success(auth_client, seed_community, db):
-    resp = await auth_client.post(f"/communities/{seed_community.id}/edit", data={
-        "name": "Updated Name",
-        "description": "Updated description.",
-    }, follow_redirects=False)
+    resp = await auth_client.post(
+        f"/communities/{seed_community.id}/edit",
+        data={
+            "name": "Updated Name",
+            "description": "Updated description.",
+        },
+        follow_redirects=False,
+    )
     assert resp.status_code in (200, 302, 303)
 
     await db.refresh(seed_community)
@@ -118,9 +139,12 @@ async def test_edit_community_success(auth_client, seed_community, db):
 
 # ── Delete community ────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_delete_community_requires_creator(auth_client, db, seed_users):
-    community = models.Community(name="Not Mine", description="x", creator_id=seed_users[1].id)
+    community = models.Community(
+        name="Not Mine", description="x", creator_id=seed_users[1].id
+    )
     db.add(community)
     await db.commit()
     await db.refresh(community)
@@ -131,7 +155,9 @@ async def test_delete_community_requires_creator(auth_client, db, seed_users):
 
 @pytest.mark.asyncio
 async def test_delete_community_success(auth_client, seed_community, db):
-    resp = await auth_client.delete(f"/communities/{seed_community.id}", follow_redirects=False)
+    resp = await auth_client.delete(
+        f"/communities/{seed_community.id}", follow_redirects=False
+    )
     assert resp.status_code in (200, 302, 303)
 
     result = await db.execute(select(models.Community).filter_by(id=seed_community.id))

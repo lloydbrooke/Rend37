@@ -13,9 +13,11 @@ from database import get_db
 
 class LoginRequiredException(HTTPException):
     """Raised when a user must log in. Carries the redirect URL."""
+
     def __init__(self, redirect_url: str):
         super().__init__(status_code=401, detail="Not logged in")
         self.redirect_url = redirect_url
+
 
 SECRET_KEY = "your_secret_key_here"
 ALGORITHM = "HS256"
@@ -23,10 +25,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def hash_password(password: str) -> str:
     if len(password) > 72:
         password = password[:72]
     return pwd_context.hash(password)
+
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -39,6 +43,7 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+
 def get_current_user_from_cookie(request: Request):
     """Checks the 'access_token' cookie for a valid JWT"""
     token = request.cookies.get("access_token")
@@ -48,7 +53,7 @@ def get_current_user_from_cookie(request: Request):
         # Remove "Bearer " prefix if present
         token = token.replace("Bearer ", "")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload.get("sub") # Returns the username
+        return payload.get("sub")  # Returns the username
     except JWTError:
         return None
 
@@ -56,10 +61,13 @@ def get_current_user_from_cookie(request: Request):
 async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)):
     """FastAPI dependency: returns the full User model object or None."""
     import models
+
     username = get_current_user_from_cookie(request)
     if not username:
         return None
-    result = await db.execute(select(models.User).filter(models.User.username == username))
+    result = await db.execute(
+        select(models.User).filter(models.User.username == username)
+    )
     return result.scalars().first()
 
 
@@ -78,6 +86,7 @@ async def require_current_user(request: Request, user=Depends(get_current_user))
             # Extract just the path from the referer URL
             if referer:
                 from urllib.parse import urlparse
+
                 next_url = urlparse(referer).path
             else:
                 next_url = "/"

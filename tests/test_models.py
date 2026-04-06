@@ -12,9 +12,12 @@ import models
 
 # ── User model ───────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_create_user(db):
-    user = models.User(username="testuser", email="test@test.com", hashed_password="fakehash")
+    user = models.User(
+        username="testuser", email="test@test.com", hashed_password="fakehash"
+    )
     db.add(user)
     await db.commit()
 
@@ -27,27 +30,38 @@ async def test_create_user(db):
 
 @pytest.mark.asyncio
 async def test_username_unique_constraint(db):
-    db.add(models.User(username="duplicate", email="a@test.com", hashed_password="hash1"))
+    db.add(
+        models.User(username="duplicate", email="a@test.com", hashed_password="hash1")
+    )
     await db.commit()
-    db.add(models.User(username="duplicate", email="b@test.com", hashed_password="hash2"))
+    db.add(
+        models.User(username="duplicate", email="b@test.com", hashed_password="hash2")
+    )
     with pytest.raises(IntegrityError):
         await db.commit()
 
 
 @pytest.mark.asyncio
 async def test_email_unique_constraint(db):
-    db.add(models.User(username="user1", email="same@test.com", hashed_password="hash1"))
+    db.add(
+        models.User(username="user1", email="same@test.com", hashed_password="hash1")
+    )
     await db.commit()
-    db.add(models.User(username="user2", email="same@test.com", hashed_password="hash2"))
+    db.add(
+        models.User(username="user2", email="same@test.com", hashed_password="hash2")
+    )
     with pytest.raises(IntegrityError):
         await db.commit()
 
 
 # ── Community model ──────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_create_community(db, seed_users):
-    community = models.Community(name="My Community", description="desc", creator_id=seed_users[0].id)
+    community = models.Community(
+        name="My Community", description="desc", creator_id=seed_users[0].id
+    )
     db.add(community)
     await db.commit()
 
@@ -59,14 +73,19 @@ async def test_create_community(db, seed_users):
 
 @pytest.mark.asyncio
 async def test_community_name_unique(db, seed_users):
-    db.add(models.Community(name="Unique", description="a", creator_id=seed_users[0].id))
+    db.add(
+        models.Community(name="Unique", description="a", creator_id=seed_users[0].id)
+    )
     await db.commit()
-    db.add(models.Community(name="Unique", description="b", creator_id=seed_users[0].id))
+    db.add(
+        models.Community(name="Unique", description="b", creator_id=seed_users[0].id)
+    )
     with pytest.raises(IntegrityError):
         await db.commit()
 
 
 # ── Event model ──────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_create_event(db, seed_event):
@@ -81,14 +100,19 @@ async def test_create_event(db, seed_event):
 
 # ── Registration model ──────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_create_registration(db, seed_users, seed_event):
-    reg = models.Registration(user_id=seed_users[1].id, event_id=seed_event.id, status="registered")
+    reg = models.Registration(
+        user_id=seed_users[1].id, event_id=seed_event.id, status="registered"
+    )
     db.add(reg)
     await db.commit()
 
     result = await db.execute(
-        select(models.Registration).filter_by(user_id=seed_users[1].id, event_id=seed_event.id)
+        select(models.Registration).filter_by(
+            user_id=seed_users[1].id, event_id=seed_event.id
+        )
     )
     fetched = result.scalars().first()
     assert fetched is not None
@@ -106,9 +130,12 @@ async def test_duplicate_registration_fails(db, seed_users, seed_event):
 
 # ── Message model ────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_create_message(db, seed_users, seed_event):
-    msg = models.Message(content="Hello world", user_id=seed_users[0].id, event_id=seed_event.id)
+    msg = models.Message(
+        content="Hello world", user_id=seed_users[0].id, event_id=seed_event.id
+    )
     db.add(msg)
     await db.commit()
 
@@ -121,11 +148,18 @@ async def test_create_message(db, seed_users, seed_event):
 
 @pytest.mark.asyncio
 async def test_threaded_message(db, seed_users, seed_event):
-    parent = models.Message(content="Parent", user_id=seed_users[0].id, event_id=seed_event.id)
+    parent = models.Message(
+        content="Parent", user_id=seed_users[0].id, event_id=seed_event.id
+    )
     db.add(parent)
     await db.flush()
 
-    reply = models.Message(content="Reply", user_id=seed_users[1].id, event_id=seed_event.id, parent_id=parent.id)
+    reply = models.Message(
+        content="Reply",
+        user_id=seed_users[1].id,
+        event_id=seed_event.id,
+        parent_id=parent.id,
+    )
     db.add(reply)
     await db.commit()
 
@@ -136,6 +170,7 @@ async def test_threaded_message(db, seed_users, seed_event):
 
 
 # ── Cascade deletes ─────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_deleting_user_cascades_communities(db, seed_users, seed_community):
@@ -163,13 +198,19 @@ async def test_deleting_event_cascades_registrations(db, seed_users, seed_event)
     await db.delete(seed_event)
     await db.commit()
 
-    result = await db.execute(select(models.Registration).filter_by(event_id=seed_event.id))
+    result = await db.execute(
+        select(models.Registration).filter_by(event_id=seed_event.id)
+    )
     assert result.scalars().first() is None
 
 
 @pytest.mark.asyncio
 async def test_deleting_event_cascades_messages(db, seed_users, seed_event):
-    db.add(models.Message(content="will be deleted", user_id=seed_users[0].id, event_id=seed_event.id))
+    db.add(
+        models.Message(
+            content="will be deleted", user_id=seed_users[0].id, event_id=seed_event.id
+        )
+    )
     await db.commit()
 
     await db.delete(seed_event)

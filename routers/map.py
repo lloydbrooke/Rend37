@@ -21,11 +21,14 @@ async def map_page(
 ):
     result = await db.execute(select(Event.category).distinct())
     categories = sorted([row[0] for row in result.all()])
-    return templates.TemplateResponse("map.html", {
-        "request": request,
-        "user": user,
-        "categories": categories,
-    })
+    return templates.TemplateResponse(
+        "map.html",
+        {
+            "request": request,
+            "user": user,
+            "categories": categories,
+        },
+    )
 
 
 @router.get("/pins")
@@ -49,16 +52,18 @@ async def get_map_pins(
             (event.latitude, event.longitude),
         )
         if distance <= radius_km:
-            pins.append({
-                "id": event.id,
-                "title": event.title,
-                "category": event.category,
-                "location_name": event.location_name,
-                "latitude": event.latitude,
-                "longitude": event.longitude,
-                "date_time": event.date_time.strftime("%b %d, %Y at %H:%M"),
-                "distance_km": round(distance, 2),
-            })
+            pins.append(
+                {
+                    "id": event.id,
+                    "title": event.title,
+                    "category": event.category,
+                    "location_name": event.location_name,
+                    "latitude": event.latitude,
+                    "longitude": event.longitude,
+                    "date_time": event.date_time.strftime("%b %d, %Y at %H:%M"),
+                    "distance_km": round(distance, 2),
+                }
+            )
 
     pins.sort(key=lambda p: p["distance_km"])
     return pins
