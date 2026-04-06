@@ -67,9 +67,20 @@ async def require_current_user(request: Request, user=Depends(get_current_user))
     """FastAPI dependency: redirects to login if not authenticated.
     After login the user is sent back to the page they originally requested."""
     if not user:
-        next_url = str(request.url.path)
-        if request.url.query:
-            next_url += f"?{request.url.query}"
+        # For POST/DELETE/etc, redirect back to the page the user was on (Referer),
+        # not the action URL which would 405 on GET
+        if request.method == "GET":
+            next_url = str(request.url.path)
+            if request.url.query:
+                next_url += f"?{request.url.query}"
+        else:
+            referer = request.headers.get("referer", "")
+            # Extract just the path from the referer URL
+            if referer:
+                from urllib.parse import urlparse
+                next_url = urlparse(referer).path
+            else:
+                next_url = "/"
         raise LoginRequiredException(
             redirect_url=f"/auth/login?error=Please+login+first&next={quote(next_url, safe='')}"
         )

@@ -96,6 +96,12 @@ async def map_page(request: Request, user=Depends(get_current_user)):
 
 @app.exception_handler(LoginRequiredException)
 async def login_required_handler(request: Request, exc: LoginRequiredException):
+    # For HTMX requests, use HX-Redirect so the browser does a full-page navigate
+    # instead of rendering the login page inside a partial div
+    if request.headers.get("hx-request"):
+        response = Response(status_code=200)
+        response.headers["HX-Redirect"] = exc.redirect_url
+        return response
     return RedirectResponse(url=exc.redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
 ''' error handling and feedback for user '''

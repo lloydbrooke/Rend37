@@ -24,3 +24,6 @@
         {% endif %}
     </div>
 
+{% if attendee_count is defined %}
+<p id="attendee-count" hx-swap-oob="true">👥 {{ attendee_count }} / {{ event.capacity_limit }} spots taken</p>
+{% endif %}

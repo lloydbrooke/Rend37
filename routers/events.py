@@ -46,7 +46,8 @@ async def create_event_form(
 
     return templates.TemplateResponse("event_form.html", {
         "request": request,
-        "communities": communities
+        "communities": communities,
+        "user": user,
     })
 
 
@@ -248,11 +249,20 @@ async def register_for_event(
     db.add(registration)
     await db.commit()
 
-    return templates.TemplateResponse("Partials/register_button.html", {
+    # Count attendees after registration
+    count_result = await db.execute(
+        select(Registration).filter(Registration.event_id == event_id)
+    )
+    attendee_count = len(count_result.scalars().all())
+
+    response = templates.TemplateResponse("Partials/register_button.html", {
         "request": request,
         "event": event,
-        "is_registered": True 
+        "is_registered": True,
+        "attendee_count": attendee_count,
     })
+    response.headers["HX-Trigger"] = "registration-changed"
+    return response
 
 
 
@@ -280,11 +290,20 @@ async def unregister_event(
     await db.delete(registration)
     await db.commit()
 
-    return templates.TemplateResponse("Partials/register_button.html", {
+    # Count attendees after unregistration
+    count_result = await db.execute(
+        select(Registration).filter(Registration.event_id == event_id)
+    )
+    attendee_count = len(count_result.scalars().all())
+
+    response = templates.TemplateResponse("Partials/register_button.html", {
         "request": request,
         "event": event,
-        "is_registered": False  
+        "is_registered": False,
+        "attendee_count": attendee_count,
     })
+    response.headers["HX-Trigger"] = "registration-changed"
+    return response
 
 
 
@@ -348,7 +367,8 @@ async def edit_event_form(
     return templates.TemplateResponse("event_form.html", {
         "request": request,
         "event": event,
-        "communities": communities
+        "communities": communities,
+        "user": user,
     })
 
 
