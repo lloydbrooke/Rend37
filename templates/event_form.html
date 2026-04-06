@@ -40,7 +40,12 @@
 
       <div class="form-control">
         <label class="label pb-1"><span class="label-text text-sm">Category</span></label>
-        <input class="input input-bordered input-sm w-full" style="background: rgba(255,255,255,0.07);" type="text" name="category" placeholder="e.g. Workshop, Social, Meetup" value="{{ event.category if event else '' }}" required />
+        <select class="select select-bordered select-sm w-full" style="background: rgba(255,255,255,0.07); color: inherit;" name="category" required>
+          <option disabled {% if not event %}selected{% endif %} value="">Select a category</option>
+          {% for cat in ['Social', 'Sports', 'Arts', 'Music', 'Gaming', 'Tech', 'Food & Drink', 'Outdoors', 'Education', 'Networking', 'Charity', 'Other'] %}
+          <option value="{{ cat }}" {% if event and event.category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <div class="divider my-2"></div>
