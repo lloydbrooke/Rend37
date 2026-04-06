@@ -169,7 +169,7 @@ async def events_page(request: Request, db: Annotated[AsyncSession, Depends(get_
 async def get_event(
     event_id: int,
     request: Request,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     event_result = await db.execute(select(Event).filter(Event.id == event_id))

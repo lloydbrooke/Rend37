@@ -19,8 +19,8 @@
             {% for event in events %}
 
                 <div class="search-item">
-                <a href="/events/{{ event.id }}" class="block"
-                   data-searchable="{{ event.title }} {{ event.category }} {{ event.location_name }} {{ event.description }}">
+                <a href="{% if user %}/events/{{ event.id }}{% else %}/auth/login?next=%2Fevents%2F{{ event.id }}{% endif %}" class="block"
+                   data-searchable="{{ event.title }} {{ event.category }} {{ event.location_name if user else '' }} {{ event.description }}">
                     <div class="card bg-base-200 border border-base-content/10 hover:shadow-lg transition cursor-pointer">
                         <div class="card-body">
 
@@ -30,13 +30,16 @@
 
                             <p>{{ event.description }}</p>
 
+                            {% if user %}
                             <p class="text-sm text-base-content/60">
-                                {{ event.location_name }}
+                                📍 {{ event.location_name }}
                             </p>
 
                             <p class="text-sm text-base-content/60">
-                                {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}
+                                🗓 {{ event.date_time.strftime('%B %d, %Y at %H:%M') }}
                             </p>
+                            {% else %}
+                            {% endif %}
 
                         </div>
                     </div>

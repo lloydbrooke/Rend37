@@ -6,7 +6,7 @@ from sqlalchemy import select, or_
 from haversine import haversine
 
 from models import Event
-from auth_utils import get_current_user
+from auth_utils import get_current_user, require_current_user
 from database import get_db
 
 router = APIRouter(tags=["map"])
@@ -16,7 +16,7 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/", response_class=HTMLResponse)
 async def map_page(
     request: Request,
-    user=Depends(get_current_user),
+    user=Depends(require_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Event.category).distinct())

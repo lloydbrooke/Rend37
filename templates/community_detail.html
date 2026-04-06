@@ -70,16 +70,20 @@
                 <div class="card bg-base-200">
                     <div class="card-body">
                         <h3 class="card-title text-lg">{{ event.title }}</h3>
+                        <div class="badge badge-outline badge-sm">{{ event.category }}</div>
                         <p>{{ event.description }}</p>
+                        {% if user %}
                         <p class="text-sm text-base-content/60">
-                            <strong>Date:</strong> {{ event.date_time.strftime('%B %d, %Y %I:%M %p') }}<br>
-                            <strong>Location:</strong> {{ event.location_name }}<br>
-                            <strong>Category:</strong> {{ event.category }}
+                            📍 {{ event.location_name }}<br>
+                            🗓 {{ event.date_time.strftime('%B %d, %Y %I:%M %p') }}
                         </p>
                         {% if event.capacity_limit %}
                         <p class="text-sm"><strong>Capacity:</strong> {{ event.attendees|length }}/{{ event.capacity_limit }}</p>
                         {% endif %}
                         <a href="/events/{{ event.id }}" class="btn btn-sm btn-outline btn-primary">View Details</a>
+                        {% else %}
+                        <a href="/auth/login?next=%2Fevents%2F{{ event.id }}" class="btn btn-sm btn-outline btn-primary">View Details</a>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
