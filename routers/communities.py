@@ -39,6 +39,13 @@ async def create_community(
             name=form_data.name, description=form_data.description, creator_id=user.id
         )
         db.add(new_community)
+        await db.flush()
+
+        # Auto-register creator as a member
+        new_membership = models.CommunityMember(
+            user_id=user.id, community_id=new_community.id
+        )
+        db.add(new_membership)
         await db.commit()
         await db.refresh(new_community)
 
