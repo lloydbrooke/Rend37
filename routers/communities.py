@@ -33,10 +33,9 @@ async def create_community(
                 url="/communities?error=Community+name+already+exists",
                 status_code=status.HTTP_302_FOUND,
             )
-
         # Create new community
         new_community = models.Community(
-            name=form_data.name, description=form_data.description, creator_id=user.id
+            name=form_data.name.capitalize(), description=form_data.description, creator_id=user.id
         )
         db.add(new_community)
         await db.flush()
