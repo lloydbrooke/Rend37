@@ -1,5 +1,5 @@
 {# Reddit-style threaded comment macro — uses inline styles + CSS classes from discussions.html #}
-{% macro render_message(msg, event_id, user, depth=0) %}
+{% macro render_message(msg, event_id, user, request,depth=0) %}
 {% set max_depth = 8 %}
 {% set px = (depth if depth <= max_depth else max_depth) * 36 %}
 
@@ -20,7 +20,9 @@
         {# Right column: content #}
         <div class="comment-body">
             <div class="comment-header">
+                <a href="{{ request.url_for('get_user_profile', user_id=msg.author.id) }}">
                 <span class="author">{{ msg.author.username }}</span>
+                </a>
                 <span class="sep">&middot;</span>
                 <span class="time">{{ msg.timestamp.strftime('%b %d, %Y at %H:%M') }}</span>
             </div>
@@ -56,7 +58,7 @@
     <div id="replies-{{ msg.id }}" class="comment-replies">
         {% if msg.temp_replies %}
             {% for reply in msg.temp_replies %}
-                {{ render_message(reply, event_id, user, depth + 1) }}
+                {{ render_message(reply, event_id, user, request, depth + 1) }}
             {% endfor %}
         {% endif %}
     </div>
@@ -65,5 +67,5 @@
 
 {# Used when POST returns a single new message #}
 {% if message %}
-    {{ render_message(message, event_id, user, depth=depth|default(0)) }}
+    {{ render_message(message, event_id, user, request, depth=depth|default(0)) }}
 {% endif %}

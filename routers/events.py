@@ -14,10 +14,8 @@ from auth_utils import get_current_user, require_current_user
 from datetime import datetime
 from haversine import haversine
 
-
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
-
 
 # Creating events/forms
 # Passed test
@@ -98,50 +96,6 @@ async def create_event(
     await db.refresh(new_event)
 
     return RedirectResponse(url="/events", status_code=303)
-
-
-# Proximity search
-# Passed Tests
-# Default values for latitude and longitude passed, as placeholder
-@router.get("/nearby")
-async def get_nearby_events(
-    request: Request,
-    #    lat: float = Query(..., ge=-90, le=90),
-    #    long: float = Query(..., ge=-180, le=180),
-    lat: float = Query(52.2405, ge=-90, le=90),
-    long: float = Query(-0.9027, ge=-180, le=180),
-    radius_km: float = Query(10, gt=0),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(select(Event))
-    all_events = result.scalars().all()
-
-    nearby_events = []
-    for event in all_events:
-        distance = haversine((lat, long), (event.latitude, event.longitude))
-        if distance <= radius_km:
-            nearby_events.append({"event": event, "distance_km": round(distance, 2)})
-
-    nearby_events.sort(key=lambda x: x["distance_km"])
-    if request.headers.get("hx-request"):
-        return templates.TemplateResponse(
-            "Partials/nearby_events.html", {"request": request, "events": nearby_events}
-        )
-    return templates.TemplateResponse(
-        "nearby.html", {"request": request, "events": nearby_events}
-    )
-
-    # Return JSON if requested, otherwise HTMX partial
-    # return nearby_events
-    # accept = request.headers.get("accept", "")
-    # if "application/json" in accept:
-    #     return [{"id": e["event"].id, "title": e["event"].title, "distance_km": e["distance_km"]} for e in nearby_events]
-
-    # return templates.TemplateResponse("Partials/nearby_events.html", {
-    #     "request": request,
-    #     "events": nearby_events
-    # })
-
 
 @router.get("/", response_class=HTMLResponse)
 async def events_page(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):

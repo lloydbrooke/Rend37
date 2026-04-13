@@ -1,14 +1,145 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>#global-search { display: none !important; }</style>
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl mt-4 font-bold mb-6">User data</h1>
-    <p class="text-5xl my-1.5">{{ user.username }}</p>
 
-    <h2 class="text-3xl mt-4"> Joined Communities </h2>
-    {% for membership in user.communities %}
-        <p>{{ membership.community.name }}</p>
-    {% endfor %}
+    {# ── Profile Header ── #}
+    <div class="flex items-center gap-4 mb-8 mt-4">
+        <div class="avatar placeholder">
+            <div class="bg-primary text-primary-content rounded-full w-16 h-16" style="display:flex;align-items:center;justify-content:center;">
+                <span class="text-2xl font-bold">{{ profile_user.username[0]|upper }}</span>
+            </div>
+        </div>
+        <div>
+            <h1 class="text-3xl font-bold">{{ profile_user.username }}</h1>
+        </div>
+    </div>
+
+    {# ── Stats Row ── #}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="card bg-base-200 border border-base-content/10">
+            <div class="card-body p-4 text-center">
+                <p class="text-2xl font-bold text-primary">{{ profile_user.owned_communities|length }}</p>
+                <p class="text-xs text-base-content/60">Communities Created</p>
+            </div>
+        </div>
+        <div class="card bg-base-200 border border-base-content/10">
+            <div class="card-body p-4 text-center">
+                <p class="text-2xl font-bold text-primary">{{ profile_user.community_memberships|length }}</p>
+                <p class="text-xs text-base-content/60">Communities Joined</p>
+            </div>
+        </div>
+        <div class="card bg-base-200 border border-base-content/10">
+            <div class="card-body p-4 text-center">
+                <p class="text-2xl font-bold text-primary">{{ profile_user.created_events|length }}</p>
+                <p class="text-xs text-base-content/60">Events Created</p>
+            </div>
+        </div>
+        <div class="card bg-base-200 border border-base-content/10">
+            <div class="card-body p-4 text-center">
+                <p class="text-2xl font-bold text-primary">{{ profile_user.registrations|length }}</p>
+                <p class="text-xs text-base-content/60">Events Registered</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+
+        {# ── Left Column ── #}
+        <div class="space-y-6">
+
+            {# Created Communities #}
+            <div class="card bg-base-200 border border-base-content/10">
+                <div class="card-body">
+                    <h2 class="card-title text-sm uppercase tracking-wider text-base-content/50">Created Communities</h2>
+                    {% if profile_user.owned_communities %}
+                    <ul class="space-y-2 mt-2">
+                        {% for community in profile_user.owned_communities %}
+                        <li>
+                            <a href="/communities/{{ community.id }}" class="flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 transition">
+                                <span class="badge badge-primary badge-xs"></span>
+                                <span class="text-sm font-medium">{{ community.name }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-base-content/40 mt-2">No communities created yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Joined Communities #}
+            <div class="card bg-base-200 border border-base-content/10">
+                <div class="card-body">
+                    <h2 class="card-title text-sm uppercase tracking-wider text-base-content/50">Joined Communities</h2>
+                    {% if profile_user.community_memberships %}
+                    <ul class="space-y-2 mt-2">
+                        {% for membership in profile_user.community_memberships %}
+                        <li>
+                            <a href="/communities/{{ membership.community.id }}" class="flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 transition">
+                                <span class="badge badge-secondary badge-xs"></span>
+                                <span class="text-sm font-medium">{{ membership.community.name }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-base-content/40 mt-2">Not a member of any communities yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        {# ── Right Column ── #}
+        <div class="space-y-6">
+
+            {# Created Events #}
+            <div class="card bg-base-200 border border-base-content/10">
+                <div class="card-body">
+                    <h2 class="card-title text-sm uppercase tracking-wider text-base-content/50">Events Created</h2>
+                    {% if profile_user.created_events %}
+                    <ul class="space-y-2 mt-2">
+                        {% for event in profile_user.created_events %}
+                        <li>
+                            <a href="/events/{{ event.id }}" class="flex items-center justify-between p-2 rounded-lg hover:bg-base-300 transition">
+                                <span class="text-sm font-medium">{{ event.title }}</span>
+                                <span class="badge badge-outline badge-sm">{{ event.category }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-base-content/40 mt-2">No events created yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Registered Events #}
+            <div class="card bg-base-200 border border-base-content/10">
+                <div class="card-body">
+                    <h2 class="card-title text-sm uppercase tracking-wider text-base-content/50">Registered Events</h2>
+                    {% if profile_user.registrations %}
+                    <ul class="space-y-2 mt-2">
+                        {% for registration in profile_user.registrations|sort(attribute='event.date_time') %}
+                        <li>
+                            <a href="/events/{{ registration.event_id }}" class="flex items-center justify-between p-2 rounded-lg hover:bg-base-300 transition">
+                                <span class="text-sm font-medium">{{ registration.event.title }}</span>
+                                <span class="text-xs text-base-content/40">{{ registration.event.date_time.strftime('%b %d, %Y at %H:%M') }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-base-content/40 mt-2">Not registered for any events yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
 
 </div>
 {% endblock %}

@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.datastructures import URL
 
 import auth_utils
 from auth_utils import require_current_user, get_current_user, LoginRequiredException
@@ -40,6 +41,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 templates = Jinja2Templates(directory="templates")
+templates.env.globals["URL"] = URL
 app.state.templates = templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

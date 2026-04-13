@@ -252,6 +252,11 @@ async def get_user_profile(
             selectinload(models.User.community_memberships).selectinload(
                 models.CommunityMember.community
             ),
+            selectinload(models.User.owned_communities),
+            selectinload(models.User.created_events),
+            selectinload(models.User.registrations).selectinload(
+                models.Registration.event
+            ),
         )
         .filter(models.User.id == user_id)
     )
@@ -264,13 +269,6 @@ async def get_user_profile(
     if user.username == db_result.username:
         return RedirectResponse("/auth/profile")
 
-    # build context dict containing public facing data
-    user_data = {
-        "username": db_result.username,
-        "communities": db_result.community_memberships,
-        "image_url": db_result.image_url,
-    }
-
     return templates.TemplateResponse(
-        "user_profile.html", {"request": request, "user": user_data}
+        "user_profile.html", {"request": request, "user": user, "profile_user": db_result}
     )
