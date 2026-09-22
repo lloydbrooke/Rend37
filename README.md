@@ -1,6 +1,14 @@
-# REND37
+Rend37 Group Software Project
 
-REND37 is a map-based web application designed to foster sustained community interaction by linking event participation to structured social contexts.
+A full-stack web application developed as part of COMP208. The application was built using Python, HTML/CSS and a relational database, with features including user authentication, profiles, communities and CRUD functionality.
+
+My Contributions:
+- Developed backend functionality in Python/FastAPI, including API routes and asynchronous database operations.
+- Worked on the application's event functionality, contributing to routing, schemas and integration with the wider application.
+- Connected backend logic to frontend pages using Jinja2 templating.
+- Debugged and tested full-stack issues, particularly where backend changes were not displaying correctly in the frontend.
+- Collaborated through GitHub feature branches, commits, merges and conflict resolution within the team development workflow.
+- This was a collaborative university project. Full commit history and contributors are retained in the repository.
 
 ## 🚀 Getting Started (Local Setup)
 
